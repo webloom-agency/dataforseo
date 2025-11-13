@@ -8,31 +8,15 @@ import { SerpYoutubeVideoInfoLiveAdvancedTool } from './tools/serp-youtube-video
 import { SerpYoutubeVideoCommentsLiveAdvancedTool } from './tools/serp-youtube-video-comments-live-advanced-tool.js';
 import { SerpYoutubeVideoSubtitlesLiveAdvancedTool } from './tools/serp-youtube-video-subtitles-live-advanced-tool.js';
 import { SerpYoutubeLocationsListTool } from './tools/serp-youtube-locations-list.tool.js';
-import { SerpYoutubeLanguagesListTool } from './tools/serp-youtube-languages-list.tool.js';
-import { SerpGoogleNewsLiveAdvancedTool } from './tools/serp-google-news-live-advanced.tool.js';
-import { SerpGoogleMapsLiveAdvancedTool } from './tools/serp-google-maps-live-advanced.tool.js';
-import { SerpGoogleImagesLiveAdvancedTool } from './tools/serp-google-images-live-advanced.tool.js';
 import { serpPrompts } from './serp.prompt.js';
 
 export class SerpApiModule extends BaseModule {
   getTools(): Record<string, ToolDefinition> {
     const tools = [
-      // Google Organic
       new SerpOrganicLiveAdvancedTool(this.dataForSEOClient),
       new SerpOrganicLocationsListTool(this.dataForSEOClient),
 
-      // Google News
-      new SerpGoogleNewsLiveAdvancedTool(this.dataForSEOClient),
-
-      // Google Maps
-      new SerpGoogleMapsLiveAdvancedTool(this.dataForSEOClient),
-
-      // Google Images
-      new SerpGoogleImagesLiveAdvancedTool(this.dataForSEOClient),
-
-      // YouTube
       new SerpYoutubeLocationsListTool(this.dataForSEOClient),
-      new SerpYoutubeLanguagesListTool(this.dataForSEOClient),
       new SerpYoutubeOrganicLiveAdvancedTool(this.dataForSEOClient),
       new SerpYoutubeVideoInfoLiveAdvancedTool(this.dataForSEOClient),
       new SerpYoutubeVideoCommentsLiveAdvancedTool(this.dataForSEOClient),
