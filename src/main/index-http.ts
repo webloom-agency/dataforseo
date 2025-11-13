@@ -173,7 +173,7 @@ async function main() {
         hasUsername: !!req.username,
         hasPassword: !!req.password
       });
-
+      
       const server = initMcpServer(req.username, req.password); 
       console.error(Date.now().toLocaleString())
 

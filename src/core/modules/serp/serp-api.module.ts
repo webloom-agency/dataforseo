@@ -9,8 +9,6 @@ import { SerpYoutubeVideoCommentsLiveAdvancedTool } from './tools/serp-youtube-v
 import { SerpYoutubeVideoSubtitlesLiveAdvancedTool } from './tools/serp-youtube-video-subtitles-live-advanced-tool.js';
 import { SerpYoutubeLocationsListTool } from './tools/serp-youtube-locations-list.tool.js';
 import { SerpYoutubeLanguagesListTool } from './tools/serp-youtube-languages-list.tool.js';
-import { SerpGoogleAiModeLanguagesTool } from './tools/serp-google-ai-mode-languages.tool.js';
-import { SerpGoogleAiModeLiveAdvancedTool } from './tools/serp-google-ai-mode-live-advanced.tool.js';
 import { SerpGoogleNewsLiveAdvancedTool } from './tools/serp-google-news-live-advanced.tool.js';
 import { SerpGoogleMapsLiveAdvancedTool } from './tools/serp-google-maps-live-advanced.tool.js';
 import { SerpGoogleImagesLiveAdvancedTool } from './tools/serp-google-images-live-advanced.tool.js';
@@ -22,10 +20,6 @@ export class SerpApiModule extends BaseModule {
       // Google Organic
       new SerpOrganicLiveAdvancedTool(this.dataForSEOClient),
       new SerpOrganicLocationsListTool(this.dataForSEOClient),
-
-      // Google AI Mode/Overviews
-      new SerpGoogleAiModeLanguagesTool(this.dataForSEOClient),
-      new SerpGoogleAiModeLiveAdvancedTool(this.dataForSEOClient),
 
       // Google News
       new SerpGoogleNewsLiveAdvancedTool(this.dataForSEOClient),

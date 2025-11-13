@@ -10,12 +10,6 @@ import { OnPageSummaryTool } from './tools/onpage-summary.tool.js';
 import { OnPagePagesTool } from './tools/onpage-pages.tool.js';
 import { OnPageResourcesTool } from './tools/onpage-resources.tool.js';
 import { OnPageLinksTool } from './tools/onpage-links.tool.js';
-import { OnPageRedirectChainsTool } from './tools/onpage-redirect-chains.tool.js';
-import { OnPageNonIndexableTool } from './tools/onpage-non-indexable.tool.js';
-import { OnPageDuplicateTagsTool } from './tools/onpage-duplicate-tags.tool.js';
-import { OnPageDuplicateContentTool } from './tools/onpage-duplicate-content.tool.js';
-import { OnPageKeywordDensityTool } from './tools/onpage-keyword-density.tool.js';
-import { OnPageMicrodataTool } from './tools/onpage-microdata.tool.js';
 
 export class OnPageApiModule extends BaseModule {
   getTools(): Record<string, ToolDefinition> {
@@ -34,12 +28,6 @@ export class OnPageApiModule extends BaseModule {
       new OnPagePagesTool(this.dataForSEOClient),
       new OnPageResourcesTool(this.dataForSEOClient),
       new OnPageLinksTool(this.dataForSEOClient),
-      new OnPageRedirectChainsTool(this.dataForSEOClient),
-      new OnPageNonIndexableTool(this.dataForSEOClient),
-      new OnPageDuplicateTagsTool(this.dataForSEOClient),
-      new OnPageDuplicateContentTool(this.dataForSEOClient),
-      new OnPageKeywordDensityTool(this.dataForSEOClient),
-      new OnPageMicrodataTool(this.dataForSEOClient),
       // Add more tools here
     ];
 
