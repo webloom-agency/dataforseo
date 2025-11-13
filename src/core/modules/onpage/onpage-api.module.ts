@@ -4,13 +4,42 @@ import { onpagePrompts } from './onpage.prompt.js';
 import { ContentParsingTool } from './tools/content-parsing.tool.js';
 import { InstantPagesTool } from './tools/instant-pages.tool.js';
 import { LighthouseTool } from './tools/lighthouse.tool.js';
+import { OnPageTaskPostTool } from './tools/onpage-task-post.tool.js';
+import { OnPageTasksReadyTool } from './tools/onpage-tasks-ready.tool.js';
+import { OnPageSummaryTool } from './tools/onpage-summary.tool.js';
+import { OnPagePagesTool } from './tools/onpage-pages.tool.js';
+import { OnPageResourcesTool } from './tools/onpage-resources.tool.js';
+import { OnPageLinksTool } from './tools/onpage-links.tool.js';
+import { OnPageRedirectChainsTool } from './tools/onpage-redirect-chains.tool.js';
+import { OnPageNonIndexableTool } from './tools/onpage-non-indexable.tool.js';
+import { OnPageDuplicateTagsTool } from './tools/onpage-duplicate-tags.tool.js';
+import { OnPageDuplicateContentTool } from './tools/onpage-duplicate-content.tool.js';
+import { OnPageKeywordDensityTool } from './tools/onpage-keyword-density.tool.js';
+import { OnPageMicrodataTool } from './tools/onpage-microdata.tool.js';
 
 export class OnPageApiModule extends BaseModule {
   getTools(): Record<string, ToolDefinition> {
     const tools = [
+      // Live endpoints (no task required)
       new ContentParsingTool(this.dataForSEOClient),
       new InstantPagesTool(this.dataForSEOClient),
       new LighthouseTool(this.dataForSEOClient),
+      
+      // Task management
+      new OnPageTaskPostTool(this.dataForSEOClient),
+      new OnPageTasksReadyTool(this.dataForSEOClient),
+      
+      // Task-based analysis endpoints
+      new OnPageSummaryTool(this.dataForSEOClient),
+      new OnPagePagesTool(this.dataForSEOClient),
+      new OnPageResourcesTool(this.dataForSEOClient),
+      new OnPageLinksTool(this.dataForSEOClient),
+      new OnPageRedirectChainsTool(this.dataForSEOClient),
+      new OnPageNonIndexableTool(this.dataForSEOClient),
+      new OnPageDuplicateTagsTool(this.dataForSEOClient),
+      new OnPageDuplicateContentTool(this.dataForSEOClient),
+      new OnPageKeywordDensityTool(this.dataForSEOClient),
+      new OnPageMicrodataTool(this.dataForSEOClient),
       // Add more tools here
     ];
 
