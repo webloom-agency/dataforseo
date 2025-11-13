@@ -51,31 +51,45 @@ async function main() {
 
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        jsonrpc: '2.0',
-        error: {
-          code: -32002,
-          message: 'Unauthorized: Bearer token required',
-        },
-        id: null,
-      });
+    // Allow requests with no Authorization header (will be handled by basicAuth or env vars)
+    if (!authHeader) {
+      return next();
     }
 
-    const token = authHeader.split(' ')[1];
-
-    if (token !== expectedToken) {
-      return res.status(403).json({
-        jsonrpc: '2.0',
-        error: {
-          code: -32003,
-          message: 'Forbidden: Invalid Bearer token',
-        },
-        id: null,
-      });
+    // Allow Basic Auth to pass through (it's for DataForSEO, not MCP server auth)
+    if (authHeader.startsWith('Basic ')) {
+      console.error('Basic Auth detected, passing through to DataForSEO client');
+      return next();
     }
 
-    next();
+    // Only validate Bearer tokens if present
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+
+      if (token !== expectedToken) {
+        return res.status(403).json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32003,
+            message: 'Forbidden: Invalid Bearer token',
+          },
+          id: null,
+        });
+      }
+
+      // Valid Bearer token, continue
+      return next();
+    }
+
+    // Unknown auth type
+    return res.status(401).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32002,
+        message: 'Unauthorized: Invalid Authorization header format',
+      },
+      id: null,
+    });
   };
 
   // Basic Auth Middleware
