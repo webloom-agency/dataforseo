@@ -40,6 +40,44 @@ async function main() {
   const app = express();
   app.use(express.json());
 
+  // Bearer auth middleware (access control for the MCP endpoint)
+  const bearerAuth = (req: Request, res: Response, next: NextFunction) => {
+    const expectedToken = process.env.MCP_BEARER_TOKEN;
+
+    // If no token configured, skip (no extra protection)
+    if (!expectedToken) {
+      return next();
+    }
+
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32002,
+          message: 'Unauthorized: Bearer token required',
+        },
+        id: null,
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    if (token !== expectedToken) {
+      return res.status(403).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32003,
+          message: 'Forbidden: Invalid Bearer token',
+        },
+        id: null,
+      });
+    }
+
+    next();
+  };
+
   // Basic Auth Middleware
   const basicAuth = (req: Request, res: Response, next: NextFunction) => {
     // Check for Authorization header
@@ -147,9 +185,9 @@ async function main() {
     });
   };
 
-  // Apply basic auth and shared handler to both endpoints
-  app.post('/http', basicAuth, handleMcpRequest);
-  app.post('/mcp', basicAuth, handleMcpRequest);
+  // Apply bearer auth and basic auth, then shared handler to both endpoints
+  app.post('/http', bearerAuth, basicAuth, handleMcpRequest);
+  app.post('/mcp', bearerAuth, basicAuth, handleMcpRequest);
 
   app.get('/http', handleNotAllowed('GET HTTP'));
   app.get('/mcp', handleNotAllowed('GET MCP'));
