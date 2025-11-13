@@ -6,11 +6,26 @@ export class DataForSEOClient {
 
   constructor(config: DataForSEOConfig) {
     this.config = config;
-    if(defaultGlobalToolConfig.debug) {
-      console.error('DataForSEOClient initialized with config:', config);
+    
+    if (!config.username || !config.password) {
+      console.error('ERROR: DataForSEOClient created with missing credentials', {
+        hasUsername: !!config.username,
+        hasPassword: !!config.password
+      });
+      throw new Error('DataForSEO username and password are required');
     }
-    const token = btoa(`${config.username}:${config.password}`);
+
+    if(defaultGlobalToolConfig.debug) {
+      console.error('DataForSEOClient initialized with config:', {
+        username: config.username.substring(0, 3) + '***',
+        hasPassword: !!config.password,
+        baseUrl: config.baseUrl || 'default'
+      });
+    }
+    
+    const token = Buffer.from(`${config.username}:${config.password}`).toString('base64');
     this.authHeader = `Basic ${token}`;
+    console.error('Auth header created for DataForSEO API');
   }
 
   async makeRequest<T>(endpoint: string, method: string = 'POST', body?: any, forceFull: boolean = false): Promise<T> {

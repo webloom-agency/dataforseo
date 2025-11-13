@@ -14,13 +14,21 @@ export function initMcpServer(username: string | undefined, password: string | u
   }, { capabilities: { logging: {} } });
 
   // Initialize DataForSEO client
+  if (!username || !password) {
+    console.error('ERROR: initMcpServer called with missing credentials', {
+      hasUsername: !!username,
+      hasPassword: !!password
+    });
+    throw new Error('DataForSEO credentials are required to initialize MCP server');
+  }
+
   const dataForSEOConfig: DataForSEOConfig = {
-    username: username || "",
-    password: password || "",
+    username: username,
+    password: password,
   };
   
   const dataForSEOClient = new DataForSEOClient(dataForSEOConfig);
-  console.error('DataForSEO client initialized');
+  console.error('DataForSEO client initialized with username:', username.substring(0, 3) + '***');
   
   // Parse enabled modules from environment
   const enabledModules = EnabledModulesSchema.parse(process.env.ENABLED_MODULES);

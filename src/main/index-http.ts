@@ -119,28 +119,47 @@ async function main() {
     
     try {
       
-      // Check if we have valid credentials
-      if (!req.username && !req.password) {
-        // If no request auth, check environment variables
+      // Check if we have valid credentials from Basic Auth
+      console.error('Request credentials:', {
+        hasUsername: !!req.username,
+        hasPassword: !!req.password,
+        username: req.username ? `${req.username.substring(0, 3)}***` : 'none'
+      });
+
+      // If no credentials from Basic Auth, use environment variables
+      if (!req.username || !req.password) {
         const envUsername = process.env.DATAFORSEO_USERNAME;
         const envPassword = process.env.DATAFORSEO_PASSWORD;
+        
+        console.error('Using environment credentials:', {
+          hasEnvUsername: !!envUsername,
+          hasEnvPassword: !!envPassword,
+          envUsername: envUsername ? `${envUsername.substring(0, 3)}***` : 'none'
+        });
+
         if (!envUsername || !envPassword) {
-          console.error('No DataForSEO credentials provided');
+          console.error('ERROR: No DataForSEO credentials provided - neither in request nor in environment variables');
           res.status(401).json({
             jsonrpc: "2.0",
             error: {
               code: -32001,
-              message: "Authentication required. Provide DataForSEO credentials."
+              message: "Authentication required. DataForSEO credentials missing."
             },
             id: null
           });
           return;
         }
+        
         // Use environment variables
         req.username = envUsername;
         req.password = envPassword;
       }
       
+      console.error('Final credentials to be used:', {
+        hasUsername: !!req.username,
+        hasPassword: !!req.password
+      });
+
       const server = initMcpServer(req.username, req.password); 
       console.error(Date.now().toLocaleString())
 
