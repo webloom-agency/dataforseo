@@ -12,12 +12,20 @@ export class SerpGoogleAdsSearchLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get Google Ads data from the Ads Transparency Center for a specific keyword. This endpoint provides information about advertisers, ad creatives, formats (text/image/video), preview URLs, and date ranges when ads were shown. Useful for competitive ad research and market analysis.';
+    return 'Get Google Ads data from a specific advertiser using their domain or advertiser ID. This endpoint retrieves all ads run by that advertiser from Google Ads Transparency Center, including ad creatives, formats (text/image/video), preview URLs, and date ranges when ads were shown. Useful for analyzing a specific competitor\'s advertising strategy.';
   }
 
   getParams(): z.ZodRawShape {
     return {
-      keyword: z.string().describe("Search keyword to find ads for (required)"),
+      target: z.string().optional().describe(`target advertiser domain
+optional field (required if advertiser_id not provided)
+domain name of the advertiser you want to get ads for
+example: "apple.com", "nike.com"`),
+      advertiser_id: z.string().optional().describe(`advertiser ID
+optional field (required if target not provided)
+unique identifier for the advertiser from Google Ads Transparency Center
+example: "AR13752565271262920705"
+note: you can get advertiser_id from the ads_advertisers endpoint`),
       location_name: z.string().default('United States').describe(`full name of the location
 required field
 Location format - hierarchical, comma-separated (from most specific to least)
@@ -25,16 +33,12 @@ Can be one of:
 1. Country only: "United States"
 2. Region,Country: "California,United States"
 3. City,Region,Country: "San Francisco,California,United States"`),
-      language_code: z.string().default('en').describe("search engine language code (e.g., 'en')"),
+      language_code: z.string().default('en').optional().describe("search engine language code (e.g., 'en')"),
       depth: z.number().min(1).max(700).default(100).optional().describe(`parsing depth
 optional field
 number of results to return
 default value: 100
 max value: 700`),
-      advertiser_ids: z.array(z.string()).optional().describe(`filter by advertiser IDs
-optional field
-array of advertiser IDs to filter results
-example: ["AR13752565271262920705", "AR02439908557932462081"]`),
       search_partners: z.boolean().optional().describe(`include search partners
 optional field
 if true, will include ads shown on Google search partners
@@ -58,18 +62,30 @@ default: "last_shown"`),
   async handle(params: any): Promise<any> {
     try {
       console.error(JSON.stringify(params, null, 2));
+      
+      // Validate that either target or advertiser_id is provided
+      if (!params.target && !params.advertiser_id) {
+        throw new Error('Either target (domain) or advertiser_id must be provided');
+      }
+
       const requestBody: any = {
-        keyword: params.keyword,
         location_name: params.location_name,
-        language_code: params.language_code,
       };
 
+      // Add either target or advertiser_id
+      if (params.target) {
+        requestBody.target = params.target;
+      }
+      if (params.advertiser_id) {
+        requestBody.advertiser_id = params.advertiser_id;
+      }
+
       // Add optional parameters only if they are provided
+      if (params.language_code !== undefined) {
+        requestBody.language_code = params.language_code;
+      }
       if (params.depth !== undefined) {
         requestBody.depth = params.depth;
-      }
-      if (params.advertiser_ids !== undefined && params.advertiser_ids.length > 0) {
-        requestBody.advertiser_ids = params.advertiser_ids;
       }
       if (params.search_partners !== undefined) {
         requestBody.search_partners = params.search_partners;
@@ -95,4 +111,3 @@ default: "last_shown"`),
     }
   }
 }
-

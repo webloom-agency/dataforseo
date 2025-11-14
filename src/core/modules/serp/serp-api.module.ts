@@ -12,6 +12,8 @@ import { SerpGoogleAiModeLiveAdvancedTool } from './tools/serp-google-ai-mode-li
 import { SerpGoogleAiModeLanguagesListTool } from './tools/serp-google-ai-mode-languages-list.tool.js';
 import { SerpGoogleAdsSearchLiveAdvancedTool } from './tools/serp-google-ads-search-live-advanced.tool.js';
 import { SerpGoogleAdsSearchLocationsListTool } from './tools/serp-google-ads-search-locations-list.tool.js';
+import { SerpGoogleAdsAdvertisersLiveAdvancedTool } from './tools/serp-google-ads-advertisers-live-advanced.tool.js';
+import { SerpGoogleAdsAdvertisersLocationsListTool } from './tools/serp-google-ads-advertisers-locations-list.tool.js';
 import { serpPrompts } from './serp.prompt.js';
 
 export class SerpApiModule extends BaseModule {
@@ -23,6 +25,8 @@ export class SerpApiModule extends BaseModule {
       new SerpGoogleAiModeLanguagesListTool(this.dataForSEOClient),
       new SerpGoogleAdsSearchLiveAdvancedTool(this.dataForSEOClient),
       new SerpGoogleAdsSearchLocationsListTool(this.dataForSEOClient),
+      new SerpGoogleAdsAdvertisersLiveAdvancedTool(this.dataForSEOClient),
+      new SerpGoogleAdsAdvertisersLocationsListTool(this.dataForSEOClient),
 
       new SerpYoutubeLocationsListTool(this.dataForSEOClient),
       new SerpYoutubeOrganicLiveAdvancedTool(this.dataForSEOClient),
