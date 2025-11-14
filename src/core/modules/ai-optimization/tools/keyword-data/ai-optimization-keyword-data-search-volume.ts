@@ -20,14 +20,11 @@ export class AiOptimizationKeywordDataSearchVolumeTool extends BaseTool {
   getParams(): z.ZodRawShape {
     return {
       keywords: z.array(z.string()).describe("Keywords. The maximum number of keywords you can specify: 1000"),
-      location_name: z.string().optional().describe(`full name of the location
-optional field
-example: 'United Kingdom', 'United States'
-note: if not specified, location_code 2840 (United States) will be used`),
       location_code: z.number().optional().describe(`location code
 optional field
-example: 2840 (United States), 2250 (France)
-note: use ai_optimization_keyword_data_locations_and_languages tool to get available locations`),
+example: 2840 (United States), 2250 (France), 2826 (United Kingdom)
+default: 2840 (United States)
+use ai_optimization_keyword_data_locations_and_languages tool to get available locations and their codes`),
     };
   }
 
@@ -38,11 +35,9 @@ note: use ai_optimization_keyword_data_locations_and_languages tool to get avail
         keywords: params.keywords,
       };
       
-      // Add location (prefer location_code over location_name)
+      // Add location_code if provided, otherwise API will use default (2840 - United States)
       if (params.location_code !== undefined) {
         requestBody.location_code = params.location_code;
-      } else if (params.location_name !== undefined) {
-        requestBody.location_name = params.location_name;
       }
       
       const response = await this.dataForSEOClient.makeRequest(`/v3/ai_optimization/ai_keyword_data/keywords_search_volume/live`, 'POST', [requestBody]);
