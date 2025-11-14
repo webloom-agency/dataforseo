@@ -4,6 +4,7 @@ import { DataForSeoTrendsDemographyTool } from './tools/dataforseo-trends/datafo
 import { DataForSeoTrendsExploreTool } from './tools/dataforseo-trends/dataforseo-trends-explore.tool.js';
 import { DataForSeoTrendsSubregionInterestsTool } from './tools/dataforseo-trends/dataforseo-trends-subregion-interests.tool.js';
 import { GoogleAdsSearchVolumeTool } from './tools/google-ads/google-ads-search-volume.tool.js';
+import { GoogleAdsKeywordsForSiteTool } from './tools/google-ads/google-ads-keywords-for-site.tool.js';
 import { GoogleTrendsCategoriesTool } from './tools/google-trends/google-trends-categories.tool.js';
 import { GoogleTrendsExploreTool } from './tools/google-trends/google-trends-explore.tool.js';
 
@@ -11,6 +12,7 @@ export class KeywordsDataApiModule extends BaseModule {
   getTools(): Record<string, ToolDefinition> {
     const tools = [
       new GoogleAdsSearchVolumeTool(this.dataForSEOClient),
+      new GoogleAdsKeywordsForSiteTool(this.dataForSEOClient),
 
       new DataForSeoTrendsDemographyTool(this.dataForSEOClient),
       new DataForSeoTrendsSubregionInterestsTool(this.dataForSEOClient),
