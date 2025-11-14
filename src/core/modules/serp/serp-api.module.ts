@@ -8,6 +8,8 @@ import { SerpYoutubeVideoInfoLiveAdvancedTool } from './tools/serp-youtube-video
 import { SerpYoutubeVideoCommentsLiveAdvancedTool } from './tools/serp-youtube-video-comments-live-advanced-tool.js';
 import { SerpYoutubeVideoSubtitlesLiveAdvancedTool } from './tools/serp-youtube-video-subtitles-live-advanced-tool.js';
 import { SerpYoutubeLocationsListTool } from './tools/serp-youtube-locations-list.tool.js';
+import { SerpGoogleAiModeLiveAdvancedTool } from './tools/serp-google-ai-mode-live-advanced.tool.js';
+import { SerpGoogleAiModeLanguagesListTool } from './tools/serp-google-ai-mode-languages-list.tool.js';
 import { serpPrompts } from './serp.prompt.js';
 
 export class SerpApiModule extends BaseModule {
@@ -15,6 +17,8 @@ export class SerpApiModule extends BaseModule {
     const tools = [
       new SerpOrganicLiveAdvancedTool(this.dataForSEOClient),
       new SerpOrganicLocationsListTool(this.dataForSEOClient),
+      new SerpGoogleAiModeLiveAdvancedTool(this.dataForSEOClient),
+      new SerpGoogleAiModeLanguagesListTool(this.dataForSEOClient),
 
       new SerpYoutubeLocationsListTool(this.dataForSEOClient),
       new SerpYoutubeOrganicLiveAdvancedTool(this.dataForSEOClient),
