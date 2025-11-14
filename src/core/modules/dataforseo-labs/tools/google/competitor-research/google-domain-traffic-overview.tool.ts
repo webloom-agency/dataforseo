@@ -48,10 +48,6 @@ Default: true`),
         paid_traffic: null,
         ai_visibility: null,
         error_details: [],
-        debug_info: {
-          raw_traffic_response_status: null,
-          raw_traffic_response_tasks_count: null,
-        },
       };
 
       // 1. Get organic and paid traffic estimates from Domain Rank Overview
@@ -67,19 +63,8 @@ Default: true`),
           }]
         );
 
-        // Log to server console for debugging
-        console.log('[DOMAIN_TRAFFIC_OVERVIEW] DataForSEO Response:', JSON.stringify(trafficResponse));
-
-        // Add debug info
-        results.debug_info.raw_traffic_response_status = trafficResponse?.status_code || null;
-        results.debug_info.raw_traffic_response_tasks_count = trafficResponse?.tasks?.length || 0;
-        results.debug_info.raw_traffic_task_status = trafficResponse?.tasks?.[0]?.status_code || null;
-        results.debug_info.raw_traffic_task_message = trafficResponse?.tasks?.[0]?.status_message || null;
-        results.debug_info.raw_traffic_result_count = trafficResponse?.tasks?.[0]?.result_count || 0;
-        results.debug_info.raw_traffic_full_response = JSON.stringify(trafficResponse).substring(0, 1000); // First 1000 chars
-
-        if (trafficResponse?.tasks?.[0]?.result?.[0]) {
-          const data = trafficResponse.tasks[0].result[0];
+        if (trafficResponse?.tasks?.[0]?.result?.[0]?.items?.[0]) {
+          const data = trafficResponse.tasks[0].result[0].items[0];
           results.organic_traffic = {
             metrics: data.metrics?.organic || null,
             keywords_count: data.metrics?.organic?.count || 0,
