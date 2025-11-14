@@ -48,6 +48,10 @@ Default: true`),
         paid_traffic: null,
         ai_visibility: null,
         error_details: [],
+        debug_info: {
+          raw_traffic_response_status: null,
+          raw_traffic_response_tasks_count: null,
+        },
       };
 
       // 1. Get organic and paid traffic estimates from Domain Rank Overview
@@ -62,6 +66,14 @@ Default: true`),
             ignore_synonyms: params.ignore_synonyms,
           }]
         );
+
+        // Add debug info
+        results.debug_info.raw_traffic_response_status = trafficResponse?.status_code || null;
+        results.debug_info.raw_traffic_response_tasks_count = trafficResponse?.tasks?.length || 0;
+        results.debug_info.raw_traffic_task_status = trafficResponse?.tasks?.[0]?.status_code || null;
+        results.debug_info.raw_traffic_task_message = trafficResponse?.tasks?.[0]?.status_message || null;
+        results.debug_info.raw_traffic_result_count = trafficResponse?.tasks?.[0]?.result_count || 0;
+        results.debug_info.raw_traffic_full_response = JSON.stringify(trafficResponse).substring(0, 1000); // First 1000 chars
 
         if (trafficResponse?.tasks?.[0]?.result?.[0]) {
           const data = trafficResponse.tasks[0].result[0];
