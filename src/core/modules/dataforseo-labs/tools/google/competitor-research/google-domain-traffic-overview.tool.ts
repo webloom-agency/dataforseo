@@ -67,6 +67,9 @@ Default: true`),
           }]
         );
 
+        // Log to server console for debugging
+        console.log('[DOMAIN_TRAFFIC_OVERVIEW] DataForSEO Response:', JSON.stringify(trafficResponse));
+
         // Add debug info
         results.debug_info.raw_traffic_response_status = trafficResponse?.status_code || null;
         results.debug_info.raw_traffic_response_tasks_count = trafficResponse?.tasks?.length || 0;
