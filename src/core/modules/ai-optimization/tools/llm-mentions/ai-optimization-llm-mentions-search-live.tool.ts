@@ -22,7 +22,7 @@ export class AiOptimizationLlmMentionsSearchLiveTool extends BaseTool {
 example: "en.wikipedia.org"`),
         keyword: z.string().optional().describe(`target keyword (up to 2000 characters)
 example: "bmw"`),
-        search_filter: z.enum(['include', 'exclude']).optional().describe(`search filter for the target
+        search_filter: z.string().optional().describe(`search filter for the target
 optional field
 possible values: include, exclude
 default: include`),
@@ -31,7 +31,7 @@ optional field
 for domain: any, sources, search_results
 for keyword: any, question, answer
 default: any`),
-        match_type: z.enum(['word_match', 'partial_match']).optional().describe(`keyword match type (only for keyword entities)
+        match_type: z.string().optional().describe(`keyword match type (only for keyword entities)
 optional field
 word_match: full-text search with additional words (e.g., "light" returns "light bulb")
 partial_match: substring search (e.g., "light" returns "lighting", "highlight")
@@ -43,7 +43,7 @@ examples:
 - Domain entity: [{"domain": "en.wikipedia.org", "search_filter": "exclude"}]
 - Keyword entity: [{"keyword": "bmw", "search_scope": ["question"], "match_type": "partial_match"}]
 - Multiple: [{"domain": "en.wikipedia.org"}, {"keyword": "bmw", "match_type": "partial_match"}]`),
-      location_name: z.string().default('United States').optional().describe(`full name of search location
+      location_name: z.string().optional().describe(`full name of search location
 optional field
 example: "United States", "United Kingdom"
 default: United States`),
@@ -54,11 +54,11 @@ default: 2840`),
       language_name: z.string().optional().describe(`full name of search language
 optional field
 example: "English"`),
-      language_code: z.string().default('en').optional().describe(`search language code
+      language_code: z.string().optional().describe(`search language code
 optional field
 example: "en", "fr"
 default: en`),
-      platform: z.enum(['google', 'chat_gpt']).default('google').optional().describe(`target AI platform
+      platform: z.string().optional().describe(`target AI platform
 optional field
 possible values: google (Google AI Overview), chat_gpt (ChatGPT)
 default: google`),
@@ -73,7 +73,7 @@ use same values as in filters array
 sorting types: asc (ascending), desc (descending)
 example: ["ai_search_volume,desc"]
 maximum 3 sorting rules`),
-      offset: z.number().min(0).max(20000).default(0).optional().describe(`offset in the results array
+      offset: z.number().min(0).max(20000).optional().describe(`offset in the results array
 optional field
 default: 0
 maximum: 20000`),
@@ -81,7 +81,7 @@ maximum: 20000`),
 optional field
 use the token from a previous response to get the next set of results
 when using this, all other parameters must be identical to the previous request`),
-      limit: z.number().min(1).max(1000).default(100).optional().describe(`maximum number of returned objects
+      limit: z.number().min(1).max(1000).optional().describe(`maximum number of returned objects
 optional field
 default: 100
 maximum: 1000`),
