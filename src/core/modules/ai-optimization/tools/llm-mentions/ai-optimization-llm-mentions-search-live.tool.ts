@@ -17,29 +17,18 @@ export class AiOptimizationLlmMentionsSearchLiveTool extends BaseTool {
 
   getParams(): z.ZodRawShape {
     return {
-      target: z.array(z.object({
-        domain: z.string().optional().describe(`target domain (without https:// and www.)
-example: "en.wikipedia.org"`),
-        keyword: z.string().optional().describe(`target keyword (up to 2000 characters)
-example: "bmw"`),
-        search_filter: z.string().optional().describe(`search filter for the target
-optional field
-possible values: include, exclude
-default: include`),
-        search_scope: z.array(z.string()).optional().describe(`search scope for the target
-optional field
-for domain: any, sources, search_results
-for keyword: any, question, answer
-default: any`),
-        match_type: z.string().optional().describe(`keyword match type (only for keyword entities)
-optional field
-word_match: full-text search with additional words (e.g., "light" returns "light bulb")
-partial_match: substring search (e.g., "light" returns "lighting", "highlight")
-default: word_match`),
-      })).min(1).max(10).describe(`array of target entities (required)
+      target: z.any().describe(`array of target entities (required)
 you can specify up to 10 entities
 each entity must contain either domain or keyword
-examples:
+
+Target entity structure:
+- domain (string, optional): target domain without https:// and www. (e.g., "en.wikipedia.org")
+- keyword (string, optional): target keyword up to 2000 characters (e.g., "bmw")
+- search_filter (string, optional): "include" or "exclude" (default: "include")
+- search_scope (array, optional): for domain: ["any"], ["sources"], ["search_results"]; for keyword: ["any"], ["question"], ["answer"]
+- match_type (string, optional): "word_match" or "partial_match" (default: "word_match")
+
+Examples:
 - Domain entity: [{"domain": "en.wikipedia.org", "search_filter": "exclude"}]
 - Keyword entity: [{"keyword": "bmw", "search_scope": ["question"], "match_type": "partial_match"}]
 - Multiple: [{"domain": "en.wikipedia.org"}, {"keyword": "bmw", "match_type": "partial_match"}]`),
@@ -62,12 +51,12 @@ default: en`),
 optional field
 possible values: google (Google AI Overview), chat_gpt (ChatGPT)
 default: google`),
-      filters: z.array(z.any()).optional().describe(`array of results filtering parameters
+      filters: z.any().optional().describe(`array of results filtering parameters
 optional field
 you can add up to 8 filters with logical operators: and, or
 supported operators: =, <>, in, not_in, like, not_like, ilike, not_ilike, match, not_match
 example: ["ai_search_volume",">","1000"]`),
-      order_by: z.array(z.string()).optional().describe(`results sorting rules
+      order_by: z.any().optional().describe(`results sorting rules
 optional field
 use same values as in filters array
 sorting types: asc (ascending), desc (descending)
@@ -94,6 +83,12 @@ maximum 255 characters`),
   async handle(params: any): Promise<any> {
     try {
       console.error(JSON.stringify(params, null, 2));
+      
+      // Validate target parameter
+      if (!params.target || !Array.isArray(params.target) || params.target.length === 0) {
+        return this.formatErrorResponse(new Error('target parameter is required and must be a non-empty array'));
+      }
+      
       const requestBody: any = {
         target: params.target,
       };
@@ -114,10 +109,10 @@ maximum 255 characters`),
       if (params.platform !== undefined) {
         requestBody.platform = params.platform;
       }
-      if (params.filters !== undefined && params.filters.length > 0) {
+      if (params.filters !== undefined && Array.isArray(params.filters) && params.filters.length > 0) {
         requestBody.filters = this.formatFilters(params.filters);
       }
-      if (params.order_by !== undefined && params.order_by.length > 0) {
+      if (params.order_by !== undefined && Array.isArray(params.order_by) && params.order_by.length > 0) {
         requestBody.order_by = this.formatOrderBy(params.order_by);
       }
       if (params.offset !== undefined) {
