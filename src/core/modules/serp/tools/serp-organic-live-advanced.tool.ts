@@ -12,7 +12,7 @@ export class SerpOrganicLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get organic search results for a keyword in specified search engine';
+    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. Note: Paid ads may not always be returned due to ad availability, location, and Google\'s dynamic SERP behavior.';
   }
 
   getParams(): z.ZodRawShape {
