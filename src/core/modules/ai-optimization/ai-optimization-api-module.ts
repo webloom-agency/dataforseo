@@ -4,6 +4,7 @@ import { AiOptimizationKeywordDataLocationsAndLanguagesListTool } from './tools/
 import { AiOptimizationKeywordDataSearchVolumeTool } from './tools/keyword-data/ai-optimization-keyword-data-search-volume.js';
 import { AiOptimizationLlmMentionsSearchLiveTool } from './tools/llm-mentions/ai-optimization-llm-mentions-search-live.tool.js';
 import { AiOptimizationLlmMentionsTopPagesLiveTool } from './tools/llm-mentions/ai-optimization-llm-mentions-top-pages-live.tool.js';
+import { AiOptimizationChatGptLlmScraperLiveAdvancedTool } from './tools/chat-gpt/ai-optimization-chat-gpt-llm-scraper-live-advanced.tool.js';
 
 export class AiOptimizationApiModule extends BaseModule {
   getTools(): Record<string, ToolDefinition> {
@@ -12,6 +13,7 @@ export class AiOptimizationApiModule extends BaseModule {
       new AiOptimizationKeywordDataSearchVolumeTool(this.dataForSEOClient),
       new AiOptimizationLlmMentionsSearchLiveTool(this.dataForSEOClient),
       new AiOptimizationLlmMentionsTopPagesLiveTool(this.dataForSEOClient),
+      new AiOptimizationChatGptLlmScraperLiveAdvancedTool(this.dataForSEOClient),
     ];
 
     return tools.reduce((acc, tool) => ({
