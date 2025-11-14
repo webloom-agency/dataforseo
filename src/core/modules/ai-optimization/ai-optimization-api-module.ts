@@ -3,6 +3,7 @@ import { PromptDefinition } from '../prompt-definition.js';
 import { AiOptimizationKeywordDataLocationsAndLanguagesListTool } from './tools/keyword-data/ai-optimization-keyword-data-locations-and-languages.js';
 import { AiOptimizationKeywordDataSearchVolumeTool } from './tools/keyword-data/ai-optimization-keyword-data-search-volume.js';
 import { AiOptimizationLlmMentionsSearchLiveTool } from './tools/llm-mentions/ai-optimization-llm-mentions-search-live.tool.js';
+import { AiOptimizationLlmMentionsTopPagesLiveTool } from './tools/llm-mentions/ai-optimization-llm-mentions-top-pages-live.tool.js';
 
 export class AiOptimizationApiModule extends BaseModule {
   getTools(): Record<string, ToolDefinition> {
@@ -10,6 +11,7 @@ export class AiOptimizationApiModule extends BaseModule {
       new AiOptimizationKeywordDataLocationsAndLanguagesListTool(this.dataForSEOClient),
       new AiOptimizationKeywordDataSearchVolumeTool(this.dataForSEOClient),
       new AiOptimizationLlmMentionsSearchLiveTool(this.dataForSEOClient),
+      new AiOptimizationLlmMentionsTopPagesLiveTool(this.dataForSEOClient),
     ];
 
     return tools.reduce((acc, tool) => ({
