@@ -8,6 +8,10 @@ export class AiOptimizationKeywordDataSearchVolumeTool extends BaseTool {
   constructor(dataForSEOClient: DataForSEOClient) {
     super(dataForSEOClient);
   }
+
+  protected supportOnlyFullResponse(): boolean {
+    return true;
+  }
   
   getName(): string {
       return "ai_optimization_keyword_data_search_volume";
