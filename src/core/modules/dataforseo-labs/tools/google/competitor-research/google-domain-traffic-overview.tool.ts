@@ -52,7 +52,7 @@ Default: true`),
 
       // 1. Get organic and paid traffic estimates from Domain Rank Overview
       try {
-        const trafficResponse = await this.client.makeRequest(
+        const trafficResponse: any = await this.client.makeRequest(
           '/v3/dataforseo_labs/google/domain_rank_overview/live',
           'POST',
           [{
@@ -104,7 +104,7 @@ Default: true`),
       if (params.include_ai_visibility) {
         try {
           // Get Google AI Overview mentions
-          const googleAiResponse = await this.client.makeRequest(
+          const googleAiResponse: any = await this.client.makeRequest(
             '/v3/ai_optimization/llm_mentions/search/live',
             'POST',
             [{
@@ -119,7 +119,7 @@ Default: true`),
           const googleAiData = googleAiResponse?.tasks?.[0]?.result?.[0];
           
           // Get ChatGPT mentions
-          const chatGptResponse = await this.client.makeRequest(
+          const chatGptResponse: any = await this.client.makeRequest(
             '/v3/ai_optimization/llm_mentions/search/live',
             'POST',
             [{

@@ -100,7 +100,7 @@ Default: false`),
         }
         organicFilters.push(['ranked_serp_element.serp_item.type', '=', 'organic']);
 
-        const organicResponse = await this.client.makeRequest(
+        const organicResponse: any = await this.client.makeRequest(
           '/v3/dataforseo_labs/google/ranked_keywords/live',
           'POST',
           [{
@@ -151,7 +151,7 @@ Default: false`),
         }
         paidFilters.push(['ranked_serp_element.serp_item.type', '=', 'paid']);
 
-        const paidResponse = await this.client.makeRequest(
+        const paidResponse: any = await this.client.makeRequest(
           '/v3/dataforseo_labs/google/ranked_keywords/live',
           'POST',
           [{
@@ -210,7 +210,7 @@ Default: false`),
           }
 
           // Get Google AI Overview mentions
-          const googleAiResponse = await this.client.makeRequest(
+          const googleAiResponse: any = await this.client.makeRequest(
             '/v3/ai_optimization/llm_mentions/search/live',
             'POST',
             [{
@@ -225,7 +225,7 @@ Default: false`),
           );
 
           // Get ChatGPT mentions
-          const chatGptResponse = await this.client.makeRequest(
+          const chatGptResponse: any = await this.client.makeRequest(
             '/v3/ai_optimization/llm_mentions/search/live',
             'POST',
             [{
