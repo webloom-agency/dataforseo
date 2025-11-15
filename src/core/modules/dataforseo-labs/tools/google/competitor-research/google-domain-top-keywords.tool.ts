@@ -239,15 +239,8 @@ Default: false`),
             }]
           );
 
-          // Debug logging
-          console.log('[DOMAIN_TOP_KEYWORDS] Google AI Response:', JSON.stringify(googleAiResponse).substring(0, 500));
-          console.log('[DOMAIN_TOP_KEYWORDS] ChatGPT Response:', JSON.stringify(chatGptResponse).substring(0, 500));
-
           const googleAiItems = googleAiResponse?.tasks?.[0]?.result?.[0]?.items || [];
           const chatGptItems = chatGptResponse?.tasks?.[0]?.result?.[0]?.items || [];
-
-          console.log('[DOMAIN_TOP_KEYWORDS] Google AI Items Count:', googleAiItems.length);
-          console.log('[DOMAIN_TOP_KEYWORDS] ChatGPT Items Count:', chatGptItems.length);
 
           // Combine and process AI keywords
           const allAiKeywords = [
