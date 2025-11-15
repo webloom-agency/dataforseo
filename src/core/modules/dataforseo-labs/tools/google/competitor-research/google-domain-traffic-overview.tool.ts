@@ -105,6 +105,12 @@ Default: true`),
 
       // 2. Get historical monthly data from Historical Rank Overview
       try {
+        // Calculate date 12 months ago
+        const today = new Date();
+        const twelveMonthsAgo = new Date(today);
+        twelveMonthsAgo.setMonth(today.getMonth() - 12);
+        const dateFrom = twelveMonthsAgo.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
         const historicalResponse: any = await this.client.makeRequest(
           '/v3/dataforseo_labs/google/historical_rank_overview/live',
           'POST',
@@ -113,15 +119,12 @@ Default: true`),
             location_name: params.location_name,
             language_code: params.language_code,
             ignore_synonyms: params.ignore_synonyms,
+            date_from: dateFrom, // Request last 12 months explicitly
           }]
         );
 
-        console.log('DEBUG: Historical response:', JSON.stringify(historicalResponse, null, 2));
-
         if (historicalResponse?.tasks?.[0]?.result?.[0]?.items) {
           const items = historicalResponse.tasks[0].result[0].items;
-          
-          console.log('DEBUG: Historical items count:', items.length);
           
           // Create a map of monthly data
           const monthlyMap: any = {};
@@ -145,9 +148,6 @@ Default: true`),
               },
             };
           });
-
-          console.log('DEBUG: Monthly map keys:', Object.keys(monthlyMap));
-          console.log('DEBUG: Monthly map size:', Object.keys(monthlyMap).length);
 
           // Store for later AI data merge
           results._monthly_map = monthlyMap;
@@ -269,59 +269,71 @@ Default: true`),
         }
       }
 
-      // 4. Compile monthly breakdown
-      if (results._monthly_map) {
-        const monthlyMap = results._monthly_map;
-        
-        // Sort by year-month and convert to array
-        const sortedMonths = Object.keys(monthlyMap)
-          .sort((a, b) => a.localeCompare(b))
-          .reverse() // Most recent first
-          .slice(0, 12); // Last 12 months
-
-        results.monthly_breakdown = sortedMonths.map(key => {
-          const data = monthlyMap[key];
-          
-          // Calculate total AI search volume
-          if (data.ai_visibility) {
-            data.ai_visibility.total_ai_search_volume = 
-              (data.ai_visibility.google_ai_search_volume || 0) + 
-              (data.ai_visibility.chatgpt_search_volume || 0);
-          }
-
-          // Get month name
-          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-          const monthName = monthNames[data.month - 1];
-
-          return {
-            period: `${monthName} ${data.year}`,
-            year: data.year,
-            month: data.month,
-            organic_traffic: data.organic || {
-              keywords_count: 0,
-              estimated_traffic_volume: 0,
-              traffic_cost: 0,
-            },
-            paid_traffic: data.paid || {
-              keywords_count: 0,
-              estimated_traffic_volume: 0,
-              traffic_cost: 0,
-            },
-            ai_visibility: data.ai_visibility || {
-              google_ai_search_volume: 0,
-              chatgpt_search_volume: 0,
-              total_ai_search_volume: 0,
-            },
-            total_traffic_estimate: 
-              (data.organic?.estimated_traffic_volume || 0) + 
-              (data.paid?.estimated_traffic_volume || 0) +
-              (data.ai_visibility?.total_ai_search_volume || 0),
-          };
-        });
-
-        // Clean up temporary field
-        delete results._monthly_map;
+      // 4. Compile monthly breakdown - always return 12 months
+      const monthlyMap = results._monthly_map || {};
+      
+      // Generate array of last 12 months (most recent first)
+      const today = new Date();
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const last12Months: Array<{ year: number; month: number; key: string }> = [];
+      
+      for (let i = 0; i < 12; i++) {
+        const date = new Date(today);
+        date.setMonth(today.getMonth() - i);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+        const key = `${year}-${String(month).padStart(2, '0')}`;
+        last12Months.push({ year, month, key });
       }
+
+      results.monthly_breakdown = last12Months.map(({ year, month, key }) => {
+        const data = monthlyMap[key] || {};
+        
+        // Calculate total AI search volume if present
+        let aiVisibility = {
+          google_ai_search_volume: 0,
+          chatgpt_search_volume: 0,
+          total_ai_search_volume: 0,
+        };
+        
+        if (data.ai_visibility) {
+          aiVisibility = {
+            google_ai_search_volume: data.ai_visibility.google_ai_search_volume || 0,
+            chatgpt_search_volume: data.ai_visibility.chatgpt_search_volume || 0,
+            total_ai_search_volume: 
+              (data.ai_visibility.google_ai_search_volume || 0) + 
+              (data.ai_visibility.chatgpt_search_volume || 0),
+          };
+        }
+
+        const monthName = monthNames[month - 1];
+        const organic = data.organic || {
+          keywords_count: 0,
+          estimated_traffic_volume: 0,
+          traffic_cost: 0,
+        };
+        const paid = data.paid || {
+          keywords_count: 0,
+          estimated_traffic_volume: 0,
+          traffic_cost: 0,
+        };
+
+        return {
+          period: `${monthName} ${year}`,
+          year,
+          month,
+          organic_traffic: organic,
+          paid_traffic: paid,
+          ai_visibility: aiVisibility,
+          total_traffic_estimate: 
+            (organic.estimated_traffic_volume || 0) + 
+            (paid.estimated_traffic_volume || 0) +
+            (aiVisibility.total_ai_search_volume || 0),
+        };
+      });
+
+      // Clean up temporary field
+      delete results._monthly_map;
 
       // Add summary
       results.summary = {
