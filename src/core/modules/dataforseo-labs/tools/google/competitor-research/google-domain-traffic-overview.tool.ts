@@ -12,7 +12,7 @@ export class GoogleDomainTrafficOverviewTool extends BaseTool {
   }
 
   getDescription(): string {
-    return `Get comprehensive traffic overview for a domain including organic traffic estimates, paid search traffic, and AI visibility/mentions over the last 12 months. This tool combines data from multiple sources to provide a complete picture of a domain's search presence across traditional and AI-powered search.`;
+    return `Get comprehensive traffic overview for a domain including organic traffic estimates, paid search traffic, and AI visibility/mentions with month-by-month historical data for the last 12 months. Returns current metrics plus detailed monthly breakdown showing traffic trends across organic search, paid ads, Google AI Overview, and ChatGPT. Perfect for tracking domain performance over time and comparing traffic sources.`;
   }
 
   getParams(): z.ZodRawShape {
@@ -47,6 +47,7 @@ Default: true`),
         organic_traffic: null,
         paid_traffic: null,
         ai_visibility: null,
+        monthly_breakdown: [],
         error_details: [],
       };
 
@@ -65,6 +66,8 @@ Default: true`),
 
         if (trafficResponse?.tasks?.[0]?.result?.[0]?.items?.[0]) {
           const data = trafficResponse.tasks[0].result[0].items[0];
+          
+          // Current metrics summary
           results.organic_traffic = {
             metrics: data.metrics?.organic || null,
             keywords_count: data.metrics?.organic?.count || 0,
@@ -92,6 +95,42 @@ Default: true`),
               top_100: data.metrics.paid.pos_51_100 || 0,
             } : null,
           };
+
+          // Extract monthly historical data
+          const organicHistory = data.metrics?.organic?.historical || [];
+          const paidHistory = data.metrics?.paid?.historical || [];
+
+          // Create a map of monthly data
+          const monthlyMap: any = {};
+
+          // Process organic history
+          organicHistory.forEach((month: any) => {
+            const key = `${month.year}-${String(month.month).padStart(2, '0')}`;
+            if (!monthlyMap[key]) {
+              monthlyMap[key] = { year: month.year, month: month.month };
+            }
+            monthlyMap[key].organic = {
+              keywords_count: month.count || 0,
+              estimated_traffic_volume: month.etv || 0,
+              traffic_cost: month.estimated_paid_traffic_cost || 0,
+            };
+          });
+
+          // Process paid history
+          paidHistory.forEach((month: any) => {
+            const key = `${month.year}-${String(month.month).padStart(2, '0')}`;
+            if (!monthlyMap[key]) {
+              monthlyMap[key] = { year: month.year, month: month.month };
+            }
+            monthlyMap[key].paid = {
+              keywords_count: month.count || 0,
+              estimated_traffic_volume: month.etv || 0,
+              traffic_cost: month.estimated_paid_traffic_cost || 0,
+            };
+          });
+
+          // Store for later AI data merge
+          results._monthly_map = monthlyMap;
         }
       } catch (error: any) {
         results.error_details.push({
@@ -103,7 +142,7 @@ Default: true`),
       // 2. Get AI visibility data if requested
       if (params.include_ai_visibility) {
         try {
-          // Get Google AI Overview mentions
+          // Get Google AI Overview mentions with more data for monthly breakdown
           const googleAiResponse: any = await this.client.makeRequest(
             '/v3/ai_optimization/llm_mentions/search/live',
             'POST',
@@ -112,7 +151,7 @@ Default: true`),
               location_name: params.location_name,
               language_code: params.language_code,
               platform: 'google',
-              limit: 1, // We just need the total count
+              limit: 100, // Get more items to aggregate monthly data
             }]
           );
 
@@ -127,7 +166,7 @@ Default: true`),
               location_name: params.location_name,
               language_code: params.language_code,
               platform: 'chat_gpt',
-              limit: 1, // We just need the total count
+              limit: 100, // Get more items to aggregate monthly data
             }]
           );
 
@@ -148,6 +187,55 @@ Default: true`),
             },
             total_ai_mentions: (googleAiData?.total_count || 0) + (chatGptData?.total_count || 0),
           };
+
+          // Process monthly AI data from items
+          const monthlyMap = results._monthly_map || {};
+
+          // Process Google AI monthly searches
+          if (googleAiData?.items) {
+            googleAiData.items.forEach((item: any) => {
+              if (item.monthly_searches) {
+                item.monthly_searches.forEach((monthData: any) => {
+                  const key = `${monthData.year}-${String(monthData.month).padStart(2, '0')}`;
+                  if (!monthlyMap[key]) {
+                    monthlyMap[key] = { year: monthData.year, month: monthData.month };
+                  }
+                  if (!monthlyMap[key].ai_visibility) {
+                    monthlyMap[key].ai_visibility = {
+                      google_ai_search_volume: 0,
+                      chatgpt_search_volume: 0,
+                      total_ai_search_volume: 0,
+                    };
+                  }
+                  monthlyMap[key].ai_visibility.google_ai_search_volume += monthData.search_volume || 0;
+                });
+              }
+            });
+          }
+
+          // Process ChatGPT monthly searches
+          if (chatGptData?.items) {
+            chatGptData.items.forEach((item: any) => {
+              if (item.monthly_searches) {
+                item.monthly_searches.forEach((monthData: any) => {
+                  const key = `${monthData.year}-${String(monthData.month).padStart(2, '0')}`;
+                  if (!monthlyMap[key]) {
+                    monthlyMap[key] = { year: monthData.year, month: monthData.month };
+                  }
+                  if (!monthlyMap[key].ai_visibility) {
+                    monthlyMap[key].ai_visibility = {
+                      google_ai_search_volume: 0,
+                      chatgpt_search_volume: 0,
+                      total_ai_search_volume: 0,
+                    };
+                  }
+                  monthlyMap[key].ai_visibility.chatgpt_search_volume += monthData.search_volume || 0;
+                });
+              }
+            });
+          }
+
+          results._monthly_map = monthlyMap;
         } catch (error: any) {
           results.ai_visibility = {
             error: 'Failed to retrieve AI visibility data',
@@ -161,6 +249,60 @@ Default: true`),
         }
       }
 
+      // 3. Compile monthly breakdown
+      if (results._monthly_map) {
+        const monthlyMap = results._monthly_map;
+        
+        // Sort by year-month and convert to array
+        const sortedMonths = Object.keys(monthlyMap)
+          .sort((a, b) => a.localeCompare(b))
+          .reverse() // Most recent first
+          .slice(0, 12); // Last 12 months
+
+        results.monthly_breakdown = sortedMonths.map(key => {
+          const data = monthlyMap[key];
+          
+          // Calculate total AI search volume
+          if (data.ai_visibility) {
+            data.ai_visibility.total_ai_search_volume = 
+              (data.ai_visibility.google_ai_search_volume || 0) + 
+              (data.ai_visibility.chatgpt_search_volume || 0);
+          }
+
+          // Get month name
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const monthName = monthNames[data.month - 1];
+
+          return {
+            period: `${monthName} ${data.year}`,
+            year: data.year,
+            month: data.month,
+            organic_traffic: data.organic || {
+              keywords_count: 0,
+              estimated_traffic_volume: 0,
+              traffic_cost: 0,
+            },
+            paid_traffic: data.paid || {
+              keywords_count: 0,
+              estimated_traffic_volume: 0,
+              traffic_cost: 0,
+            },
+            ai_visibility: data.ai_visibility || {
+              google_ai_search_volume: 0,
+              chatgpt_search_volume: 0,
+              total_ai_search_volume: 0,
+            },
+            total_traffic_estimate: 
+              (data.organic?.estimated_traffic_volume || 0) + 
+              (data.paid?.estimated_traffic_volume || 0) +
+              (data.ai_visibility?.total_ai_search_volume || 0),
+          };
+        });
+
+        // Clean up temporary field
+        delete results._monthly_map;
+      }
+
       // Add summary
       results.summary = {
         total_organic_keywords: results.organic_traffic?.keywords_count || 0,
@@ -168,6 +310,7 @@ Default: true`),
         total_ai_mentions: results.ai_visibility?.total_ai_mentions || 0,
         organic_traffic_value: results.organic_traffic?.estimated_traffic_volume || 0,
         paid_traffic_value: results.paid_traffic?.estimated_traffic_volume || 0,
+        months_available: results.monthly_breakdown?.length || 0,
       };
 
       return results;
