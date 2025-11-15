@@ -51,9 +51,9 @@ Default: true`),
         error_details: [],
       };
 
-      // 1. Get organic and paid traffic estimates from Domain Rank Overview
+      // 1. Get current overview from Domain Rank Overview
       try {
-        const trafficResponse: any = await this.client.makeRequest(
+        const currentResponse: any = await this.client.makeRequest(
           '/v3/dataforseo_labs/google/domain_rank_overview/live',
           'POST',
           [{
@@ -64,8 +64,8 @@ Default: true`),
           }]
         );
 
-        if (trafficResponse?.tasks?.[0]?.result?.[0]?.items?.[0]) {
-          const data = trafficResponse.tasks[0].result[0].items[0];
+        if (currentResponse?.tasks?.[0]?.result?.[0]?.items?.[0]) {
+          const data = currentResponse.tasks[0].result[0].items[0];
           
           // Current metrics summary
           results.organic_traffic = {
@@ -95,51 +95,71 @@ Default: true`),
               top_100: data.metrics.paid.pos_51_100 || 0,
             } : null,
           };
+        }
+      } catch (error: any) {
+        results.error_details.push({
+          source: 'current_overview',
+          message: error.message || 'Failed to retrieve current overview data',
+        });
+      }
 
-          // Extract monthly historical data
-          const organicHistory = data.metrics?.organic?.historical || [];
-          const paidHistory = data.metrics?.paid?.historical || [];
+      // 2. Get historical monthly data from Historical Rank Overview
+      try {
+        const historicalResponse: any = await this.client.makeRequest(
+          '/v3/dataforseo_labs/google/historical_rank_overview/live',
+          'POST',
+          [{
+            target: params.target,
+            location_name: params.location_name,
+            language_code: params.language_code,
+            ignore_synonyms: params.ignore_synonyms,
+          }]
+        );
 
+        console.log('DEBUG: Historical response:', JSON.stringify(historicalResponse, null, 2));
+
+        if (historicalResponse?.tasks?.[0]?.result?.[0]?.items) {
+          const items = historicalResponse.tasks[0].result[0].items;
+          
+          console.log('DEBUG: Historical items count:', items.length);
+          
           // Create a map of monthly data
           const monthlyMap: any = {};
 
-          // Process organic history
-          organicHistory.forEach((month: any) => {
-            const key = `${month.year}-${String(month.month).padStart(2, '0')}`;
-            if (!monthlyMap[key]) {
-              monthlyMap[key] = { year: month.year, month: month.month };
-            }
-            monthlyMap[key].organic = {
-              keywords_count: month.count || 0,
-              estimated_traffic_volume: month.etv || 0,
-              traffic_cost: month.estimated_paid_traffic_cost || 0,
+          // Process each month's data
+          items.forEach((monthData: any) => {
+            const key = `${monthData.year}-${String(monthData.month).padStart(2, '0')}`;
+            
+            monthlyMap[key] = {
+              year: monthData.year,
+              month: monthData.month,
+              organic: {
+                keywords_count: monthData.metrics?.organic?.count || 0,
+                estimated_traffic_volume: monthData.metrics?.organic?.etv || 0,
+                traffic_cost: monthData.metrics?.organic?.estimated_paid_traffic_cost || 0,
+              },
+              paid: {
+                keywords_count: monthData.metrics?.paid?.count || 0,
+                estimated_traffic_volume: monthData.metrics?.paid?.etv || 0,
+                traffic_cost: monthData.metrics?.paid?.estimated_paid_traffic_cost || 0,
+              },
             };
           });
 
-          // Process paid history
-          paidHistory.forEach((month: any) => {
-            const key = `${month.year}-${String(month.month).padStart(2, '0')}`;
-            if (!monthlyMap[key]) {
-              monthlyMap[key] = { year: month.year, month: month.month };
-            }
-            monthlyMap[key].paid = {
-              keywords_count: month.count || 0,
-              estimated_traffic_volume: month.etv || 0,
-              traffic_cost: month.estimated_paid_traffic_cost || 0,
-            };
-          });
+          console.log('DEBUG: Monthly map keys:', Object.keys(monthlyMap));
+          console.log('DEBUG: Monthly map size:', Object.keys(monthlyMap).length);
 
           // Store for later AI data merge
           results._monthly_map = monthlyMap;
         }
       } catch (error: any) {
         results.error_details.push({
-          source: 'organic_paid_traffic',
-          message: error.message || 'Failed to retrieve organic/paid traffic data',
+          source: 'historical_data',
+          message: error.message || 'Failed to retrieve historical data',
         });
       }
 
-      // 2. Get AI visibility data if requested
+      // 3. Get AI visibility data if requested
       if (params.include_ai_visibility) {
         try {
           // Get Google AI Overview mentions with more data for monthly breakdown
@@ -249,7 +269,7 @@ Default: true`),
         }
       }
 
-      // 3. Compile monthly breakdown
+      // 4. Compile monthly breakdown
       if (results._monthly_map) {
         const monthlyMap = results._monthly_map;
         
