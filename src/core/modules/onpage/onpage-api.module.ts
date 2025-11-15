@@ -4,6 +4,7 @@ import { onpagePrompts } from './onpage.prompt.js';
 import { ContentParsingTool } from './tools/content-parsing.tool.js';
 import { InstantPagesTool } from './tools/instant-pages.tool.js';
 import { LighthouseTool } from './tools/lighthouse.tool.js';
+import { OnPageTaskManagerTool } from './tools/onpage-task-manager.tool.js';
 
 export class OnPageApiModule extends BaseModule {
   getTools(): Record<string, ToolDefinition> {
@@ -11,6 +12,7 @@ export class OnPageApiModule extends BaseModule {
       new ContentParsingTool(this.dataForSEOClient),
       new InstantPagesTool(this.dataForSEOClient),
       new LighthouseTool(this.dataForSEOClient),
+      new OnPageTaskManagerTool(this.dataForSEOClient),
       // Add more tools here
     ];
 
