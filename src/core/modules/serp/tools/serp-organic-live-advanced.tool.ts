@@ -18,13 +18,14 @@ export class SerpOrganicLiveAdvancedTool extends BaseTool {
   getParams(): z.ZodRawShape {
     return {
       search_engine: z.string().default('google').describe("search engine name, one of: google, yahoo, bing."),
-      location_name: z.string().default('United States').describe(`full name of the location
+      location_name: z.string().default('Paris,France').describe(`full name of the location
 required field
 Location format - hierarchical, comma-separated (from most specific to least)
  Can be one of:
  1. Country only: "United States"
  2. Region,Country: "California,United States"
- 3. City,Region,Country: "San Francisco,California,United States"`),
+ 3. City,Region,Country: "Paris,France" or "San Francisco,California,United States"
+Note: Using a city location (e.g., "Paris,France") instead of just country often shows more paid ads`),
       depth: z.number().min(10).max(700).default(10).describe(`parsing depth
 optional field
 number of results in SERP`),
@@ -54,6 +55,11 @@ optional field
 can take the values: 1 (normal priority), 2 (high priority)
 default value: 1
 note: high priority costs more but executes faster`),
+      adtest: z.string().default('on').optional().describe(`ad test mode
+optional field
+can take the values: 'on', 'off'
+default value: 'on'
+note: setting to 'on' forces Google to show test ads, significantly increasing the likelihood of seeing paid ads in results`),
       people_also_ask_click_depth: z.number().min(1).max(4).optional()
       .describe(`clicks on the corresponding element
         specify the click depth on the people_also_ask element to get additional people_also_ask_element items;`)
@@ -82,6 +88,9 @@ note: high priority costs more but executes faster`),
       }
       if (params.priority !== undefined) {
         requestBody.priority = params.priority;
+      }
+      if (params.adtest !== undefined) {
+        requestBody.search_param = `adtest=${params.adtest}`;
       }
       if (params.people_also_ask_click_depth !== undefined && params.people_also_ask_click_depth > 0) {
         requestBody.people_also_ask_click_depth = params.people_also_ask_click_depth;
