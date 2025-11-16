@@ -12,20 +12,25 @@ export class SerpOrganicLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. The tool is optimized for retrieving paid ads by: 1) using city-level location by default (Paris,France), 2) automatically adding adtest=on parameter. For best paid ad results, always specify a city (e.g., "Paris,France" not just "France").';
+    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. Optimized for paid ads with: 1) city-level location_code by default (Paris: 1006094), 2) adtest=on always enabled. Supports both location_code (recommended, more reliable) and location_name. For best paid ad results, use city-level locations not country-only.';
   }
 
   getParams(): z.ZodRawShape {
     return {
       search_engine: z.string().default('google').describe("search engine name, one of: google, yahoo, bing."),
-      location_name: z.string().default('Paris,France').describe(`full name of the location
-required field
-Location format - hierarchical, comma-separated (from most specific to least)
- Can be one of:
- 1. Country only: "United States"
- 2. Region,Country: "California,United States"
- 3. City,Region,Country: "Paris,France" or "San Francisco,California,United States"
-Note: Using a city location (e.g., "Paris,France") instead of just country often shows more paid ads`),
+      location_name: z.string().optional().describe(`full name of the location
+optional field (if location_code not provided)
+Location format varies by region. Common formats:
+ - France: "Paris,Ile-de-France,France" 
+ - USA: "New York,New York,United States"
+ - UK: "London,England,United Kingdom"
+Note: City-level locations show more paid ads than country-only. Use serp_locations tool to find exact format.`),
+      location_code: z.number().default(1006094).optional().describe(`location code
+optional field (if location_name not provided)
+Numeric code for precise location targeting
+default: 1006094 (Paris, France)
+Common codes: 1006094 (Paris), 1023191 (New York), 1006886 (London)
+Recommended: Use location_code for more reliable results than location_name`),
       depth: z.number().min(10).max(700).default(10).describe(`parsing depth
 optional field
 number of results in SERP`),
@@ -71,7 +76,6 @@ note: setting to 'on' forces Google to show test ads, significantly increasing t
       console.error(JSON.stringify(params, null, 2));
       
       const requestBody: any = {
-        location_name: params.location_name,
         language_code: params.language_code,
         keyword: params.keyword,
         depth: params.depth,
@@ -80,6 +84,16 @@ note: setting to 'on' forces Google to show test ads, significantly increasing t
         // Always add adtest parameter to increase likelihood of seeing paid ads
         search_param: `adtest=${params.adtest || 'on'}`,
       };
+
+      // Add location (prefer location_code for more reliable results)
+      if (params.location_code !== undefined) {
+        requestBody.location_code = params.location_code;
+      } else if (params.location_name !== undefined) {
+        requestBody.location_name = params.location_name;
+      } else {
+        // Default to Paris location code if neither is provided
+        requestBody.location_code = 1006094;
+      }
 
       // Add optional parameters only if they are provided
       if (params.os !== undefined) {
