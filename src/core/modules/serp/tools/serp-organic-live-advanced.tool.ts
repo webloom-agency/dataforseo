@@ -12,7 +12,7 @@ export class SerpOrganicLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. Note: Paid ads may not always be returned due to ad availability, location, and Google\'s dynamic SERP behavior.';
+    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. The tool is optimized for retrieving paid ads by: 1) using city-level location by default (Paris,France), 2) automatically adding adtest=on parameter. For best paid ad results, always specify a city (e.g., "Paris,France" not just "France").';
   }
 
   getParams(): z.ZodRawShape {
@@ -77,6 +77,8 @@ note: setting to 'on' forces Google to show test ads, significantly increasing t
         depth: params.depth,
         max_crawl_pages: params.max_crawl_pages,
         device: params.device,
+        // Always add adtest parameter to increase likelihood of seeing paid ads
+        search_param: `adtest=${params.adtest || 'on'}`,
       };
 
       // Add optional parameters only if they are provided
@@ -88,9 +90,6 @@ note: setting to 'on' forces Google to show test ads, significantly increasing t
       }
       if (params.priority !== undefined) {
         requestBody.priority = params.priority;
-      }
-      if (params.adtest !== undefined) {
-        requestBody.search_param = `adtest=${params.adtest}`;
       }
       if (params.people_also_ask_click_depth !== undefined && params.people_also_ask_click_depth > 0) {
         requestBody.people_also_ask_click_depth = params.people_also_ask_click_depth;
