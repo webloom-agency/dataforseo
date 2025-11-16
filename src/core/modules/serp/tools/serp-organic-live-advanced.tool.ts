@@ -39,6 +39,21 @@ Note: the max_crawl_pages and depth parameters complement each other`),
 optional field
 can take the values:desktop, mobile
 default value: desktop`),
+      os: z.string().optional().describe(`device operating system
+optional field
+can take the values: windows, macos, android, ios
+default value: windows
+note: if you specify 'mobile' as device, os should be android or ios`),
+      se_domain: z.string().optional().describe(`search engine domain
+optional field
+domain name of the search engine used for the search
+example: google.fr, google.co.uk, google.de
+note: using country-specific domain can help retrieve localized ads`),
+      priority: z.number().min(1).max(2).optional().describe(`task execution priority
+optional field
+can take the values: 1 (normal priority), 2 (high priority)
+default value: 1
+note: high priority costs more but executes faster`),
       people_also_ask_click_depth: z.number().min(1).max(4).optional()
       .describe(`clicks on the corresponding element
         specify the click depth on the people_also_ask element to get additional people_also_ask_element items;`)
@@ -48,15 +63,31 @@ default value: desktop`),
   async handle(params:any): Promise<any> {
     try {
       console.error(JSON.stringify(params, null, 2));
-      const response = await this.dataForSEOClient.makeRequest(`/v3/serp/${params.search_engine}/organic/live/advanced`, 'POST', [{
+      
+      const requestBody: any = {
         location_name: params.location_name,
         language_code: params.language_code,
         keyword: params.keyword,
         depth: params.depth,
         max_crawl_pages: params.max_crawl_pages,
         device: params.device,
-        people_also_ask_click_depth: params.people_also_ask_click_depth && params.people_also_ask_click_depth > 0 ? params.people_also_ask_click_depth : undefined,
-      }]);
+      };
+
+      // Add optional parameters only if they are provided
+      if (params.os !== undefined) {
+        requestBody.os = params.os;
+      }
+      if (params.se_domain !== undefined) {
+        requestBody.se_domain = params.se_domain;
+      }
+      if (params.priority !== undefined) {
+        requestBody.priority = params.priority;
+      }
+      if (params.people_also_ask_click_depth !== undefined && params.people_also_ask_click_depth > 0) {
+        requestBody.people_also_ask_click_depth = params.people_also_ask_click_depth;
+      }
+
+      const response = await this.dataForSEOClient.makeRequest(`/v3/serp/${params.search_engine}/organic/live/advanced`, 'POST', [requestBody]);
       return this.validateAndFormatResponse(response);
     } catch (error) {
       return this.formatErrorResponse(error);
