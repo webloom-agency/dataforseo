@@ -12,25 +12,24 @@ export class SerpOrganicLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. Optimized for paid ads with: 1) city-level location_code by default (Paris: 1006094), 2) adtest=on always enabled. Supports both location_code (recommended, more reliable) and location_name. For best paid ad results, use city-level locations not country-only.';
+    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. IMPORTANT: Location defaults to Paris (location_code: 1006094) automatically - DO NOT add location_name parameter unless user explicitly provides full hierarchical format like "Paris,Ile-de-France,France". For other cities, use location_code (e.g., New York: 1023191, London: 1006886). Always includes adtest=on for paid ads. City-level locations show more ads than country-level.';
   }
 
   getParams(): z.ZodRawShape {
     return {
       search_engine: z.string().default('google').describe("search engine name, one of: google, yahoo, bing."),
       location_name: z.string().optional().describe(`full name of the location
-optional field (if location_code not provided)
-Location format varies by region. Common formats:
- - France: "Paris,Ile-de-France,France" 
- - USA: "New York,New York,United States"
- - UK: "London,England,United Kingdom"
-Note: City-level locations show more paid ads than country-only. Use serp_locations tool to find exact format.`),
-      location_code: z.number().default(1006094).optional().describe(`location code
-optional field (if location_name not provided)
-Numeric code for precise location targeting
-default: 1006094 (Paris, France)
+ONLY use if user explicitly provides COMPLETE hierarchical format
+Required format examples:
+ - France: "Paris,Ile-de-France,France" (NOT "Paris,France")
+ - USA: "New York,New York,United States" (NOT "New York")
+ - UK: "London,England,United Kingdom" (NOT "London")
+WARNING: If user just says "in Paris" or "in New York", DO NOT use this parameter - let it default to location_code`),
+      location_code: z.number().default(1006094).optional().describe(`location code for precise targeting
+optional field - defaults to 1006094 (Paris, France) if not specified
+RECOMMENDED: Use this instead of location_name for reliability
 Common codes: 1006094 (Paris), 1023191 (New York), 1006886 (London)
-Recommended: Use location_code for more reliable results than location_name`),
+If user mentions a city (e.g., "in New York"), use the appropriate location_code, NOT location_name`),
       depth: z.number().min(10).max(700).default(10).describe(`parsing depth
 optional field
 number of results in SERP`),
