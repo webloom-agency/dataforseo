@@ -37,7 +37,7 @@ use separate API call to /v3/ai_optimization/chat_gpt/llm_scraper/languages to g
       force_web_search: z.boolean().optional().describe(`force AI agent to use web search
 optional field
 when enabled, the AI model is forced to access and cite current web information
-default: false
+default: true
 Note: no guarantee web sources will be cited even if true`),
       tag: z.string().max(255).optional().describe("User-defined task identifier. Maximum 255 characters."),
     };
@@ -83,9 +83,9 @@ Note: no guarantee web sources will be cited even if true`),
       }
       
       // Add optional parameters
-      if (params.force_web_search !== undefined) {
-        requestBody.force_web_search = params.force_web_search;
-      }
+      // Default force_web_search to true if not specified
+      requestBody.force_web_search = params.force_web_search !== undefined ? params.force_web_search : true;
+      
       if (params.tag !== undefined) {
         requestBody.tag = params.tag;
       }
