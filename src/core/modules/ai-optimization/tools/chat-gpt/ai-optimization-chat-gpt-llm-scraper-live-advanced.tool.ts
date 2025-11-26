@@ -12,7 +12,7 @@ export class AiOptimizationChatGptLlmScraperLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get live ChatGPT search results for a keyword. Returns ChatGPT response with sources, search results, and formatted content in markdown. Requires location and language. Note: Currently only supports English language.';
+    return 'Get live ChatGPT search results for a keyword. Returns ChatGPT response with sources, search results, and formatted content in markdown. Requires location and language. Supports multiple languages (English, French, German, Spanish, etc.).';
   }
 
   getParams(): z.ZodRawShape {
@@ -29,11 +29,11 @@ format: "latitude,longitude"
 example: "52.6178549,-155.352142"
 Note: location will be set to the country containing the coordinates`),
       language_code: z.string().optional().describe(`language code (required if language_name not specified)
-currently only supported value: "en"
-use separate API call to get available languages`),
+examples: "en" (English), "fr" (French), "de" (German), "es" (Spanish), etc.
+use separate API call to /v3/ai_optimization/chat_gpt/llm_scraper/languages to get available languages`),
       language_name: z.string().optional().describe(`full name of language (required if language_code not specified)
-currently only supported value: "English"
-use separate API call to get available languages`),
+examples: "English", "French", "German", "Spanish", etc.
+use separate API call to /v3/ai_optimization/chat_gpt/llm_scraper/languages to get available languages`),
       force_web_search: z.boolean().optional().describe(`force AI agent to use web search
 optional field
 when enabled, the AI model is forced to access and cite current web information
