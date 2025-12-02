@@ -12,18 +12,21 @@ export class AiOptimizationChatGptLlmScraperLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get live ChatGPT search results for a keyword. Returns ChatGPT response with sources, search results, and formatted content in markdown. Requires location and language. Supports multiple languages (English, French, German, Spanish, etc.).';
+    return 'Get live ChatGPT search results for a keyword. Returns ChatGPT response with sources, search results, and formatted content in markdown. Requires location and language. Supports multiple languages (English, French, German, Spanish, etc.). IMPORTANT: For best language-specific results, use location_code instead of location_name. The response should be in the language specified by language_code parameter.';
   }
 
   getParams(): z.ZodRawShape {
     return {
       keyword: z.string().describe("Search keyword (required). Maximum 2000 characters."),
       location_code: z.number().optional().describe(`location code (required if location_name/location_coordinate not specified)
-example: 2840 (United States), 2826 (United Kingdom)
-use separate API call to get available locations`),
-      location_name: z.string().optional().describe(`full name of location (required if location_code/location_coordinate not specified)
-example: "London,England,United Kingdom"
-use separate API call to get available locations`),
+RECOMMENDED: Use location_code for more reliable language-specific results
+example: 2840 (United States), 2826 (United Kingdom), 2250 (France)
+use separate API call to /v3/ai_optimization/chat_gpt/llm_scraper/locations to get available locations`),
+      location_name: z.string().optional().describe(`full name of location in hierarchical format (required if location_code/location_coordinate not specified)
+REQUIRED FORMAT: "City,Region,Country" (comma-separated, hierarchical)
+example: "London,England,United Kingdom" or "Paris,Île-de-France,France"
+WARNING: Using just country name (e.g., "France") may not work correctly - prefer location_code instead
+use separate API call to /v3/ai_optimization/chat_gpt/llm_scraper/locations to get available locations`),
       location_coordinate: z.string().optional().describe(`GPS coordinates (required if location_code/location_name not specified)
 format: "latitude,longitude"
 example: "52.6178549,-155.352142"
@@ -66,6 +69,13 @@ Note: no guarantee web sources will be cited even if true`),
         keyword: params.keyword,
       };
       
+      // Add language FIRST (prefer language_code) - this is critical for language-specific responses
+      if (params.language_code !== undefined) {
+        requestBody.language_code = params.language_code;
+      } else if (params.language_name !== undefined) {
+        requestBody.language_name = params.language_name;
+      }
+      
       // Add location (prefer location_code, then location_name, then location_coordinate)
       if (params.location_code !== undefined) {
         requestBody.location_code = params.location_code;
@@ -75,13 +85,6 @@ Note: no guarantee web sources will be cited even if true`),
         requestBody.location_coordinate = params.location_coordinate;
       }
       
-      // Add language (prefer language_code)
-      if (params.language_code !== undefined) {
-        requestBody.language_code = params.language_code;
-      } else if (params.language_name !== undefined) {
-        requestBody.language_name = params.language_name;
-      }
-      
       // Add optional parameters
       // Default force_web_search to true if not specified
       requestBody.force_web_search = params.force_web_search !== undefined ? params.force_web_search : true;
@@ -89,6 +92,9 @@ Note: no guarantee web sources will be cited even if true`),
       if (params.tag !== undefined) {
         requestBody.tag = params.tag;
       }
+      
+      // Log the request body for debugging
+      console.error('ChatGPT LLM Scraper request body:', JSON.stringify(requestBody, null, 2));
       
       const response = await this.dataForSEOClient.makeRequest(
         '/v3/ai_optimization/chat_gpt/llm_scraper/live/advanced',
