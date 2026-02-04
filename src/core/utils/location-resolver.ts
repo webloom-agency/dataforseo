@@ -98,21 +98,39 @@ export class LocationResolver {
 
   /**
    * Find the best matching location from results
-   * Priority: exact name match > city type > first result
+   * ALWAYS prioritizes city-level locations for better SERP features (local pack, ads, etc.)
+   * Even if user says "England" or "Spain", we return a city in that region/country
    */
   private static findBestMatch(results: LocationResult[], input: string): LocationResult | null {
     const inputLower = input.toLowerCase().trim();
     
-    // Priority 1: Exact match on the first part of location_name (city name)
+    // City-level location types (these trigger SERP features)
+    const cityTypes = ['City', 'Municipality', 'Borough', 'District', 'DMA Region'];
+    
+    // Priority 1: City with exact match on city name
     for (const loc of results) {
-      const cityName = loc.location_name.split(',')[0].toLowerCase().trim();
-      if (cityName === inputLower) {
-        return loc;
+      if (cityTypes.includes(loc.location_type)) {
+        const cityName = loc.location_name.split(',')[0].toLowerCase().trim();
+        if (cityName === inputLower) {
+          return loc;
+        }
       }
     }
 
-    // Priority 2: City-type location that contains the input
-    const cityTypes = ['City', 'Municipality', 'Borough', 'District'];
+    // Priority 2: City where input matches the region/country part
+    // e.g., "England" → finds "London,England,United Kingdom"
+    // e.g., "Spain" → finds "Madrid,Madrid,Spain"
+    for (const loc of results) {
+      if (cityTypes.includes(loc.location_type)) {
+        const parts = loc.location_name.split(',').map(p => p.toLowerCase().trim());
+        // Check if input matches region or country (not the city name itself)
+        if (parts.slice(1).some(part => part === inputLower || part.includes(inputLower))) {
+          return loc;
+        }
+      }
+    }
+
+    // Priority 3: Any city-level location containing input in city name
     for (const loc of results) {
       if (cityTypes.includes(loc.location_type)) {
         const cityName = loc.location_name.split(',')[0].toLowerCase().trim();
@@ -122,15 +140,14 @@ export class LocationResolver {
       }
     }
 
-    // Priority 3: Any location containing the input in first part
+    // Priority 4: First city-level result found
     for (const loc of results) {
-      const cityName = loc.location_name.split(',')[0].toLowerCase().trim();
-      if (cityName.includes(inputLower) || inputLower.includes(cityName)) {
+      if (cityTypes.includes(loc.location_type)) {
         return loc;
       }
     }
 
-    // Fallback: First result
+    // Fallback: First result (even if not city-level)
     return results[0] || null;
   }
 
