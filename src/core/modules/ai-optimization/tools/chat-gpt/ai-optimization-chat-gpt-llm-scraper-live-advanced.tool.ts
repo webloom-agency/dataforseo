@@ -32,9 +32,12 @@ format: "latitude,longitude"
 example: "52.6178549,-155.352142"
 Note: location will be set to the country containing the coordinates`),
       language_code: z.string().optional().describe(`language code (required if language_name not specified)
+IMPORTANT: Verify the exact language code format from /v3/ai_optimization/chat_gpt/llm_scraper/languages endpoint
 examples: "en" (English), "fr" (French), "de" (German), "es" (Spanish), etc.
+If language_code doesn't work, try using language_name instead
 use separate API call to /v3/ai_optimization/chat_gpt/llm_scraper/languages to get available languages`),
       language_name: z.string().optional().describe(`full name of language (required if language_code not specified)
+RECOMMENDED: Try language_name if language_code doesn't produce language-specific results
 examples: "English", "French", "German", "Spanish", etc.
 use separate API call to /v3/ai_optimization/chat_gpt/llm_scraper/languages to get available languages`),
       force_web_search: z.boolean().optional().describe(`force AI agent to use web search

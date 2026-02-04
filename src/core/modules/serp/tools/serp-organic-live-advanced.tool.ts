@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { BaseTool } from '../../base.tool.js';
 import { DataForSEOClient } from '../../../client/dataforseo.client.js';
+import { LocationResolver } from '../../../utils/location-resolver.js';
 
 export class SerpOrganicLiveAdvancedTool extends BaseTool {
   constructor(dataForSEOClient: DataForSEOClient) {
@@ -12,19 +13,16 @@ export class SerpOrganicLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. IMPORTANT: Location defaults to Paris (location_code: 1006094) automatically - DO NOT add location_name parameter unless user explicitly provides full hierarchical format like "Paris,Ile-de-France,France". For other cities, use location_code (e.g., New York: 1023191, London: 1006886). Always includes adtest=on for paid ads. City-level locations show more ads than country-level.';
+    return 'Get search engine results for a keyword including organic results, paid ads (when available), featured snippets, local pack, people also ask, and other SERP features. Location can be provided in natural language (e.g., "Brussels", "NYC", "Paris") and will be auto-resolved to the correct format. Defaults to Paris if no location specified. Always includes adtest=on for paid ads.';
   }
 
   getParams(): z.ZodRawShape {
     return {
       search_engine: z.string().default('google').describe("search engine name, one of: google, yahoo, bing."),
-      location_name: z.string().optional().describe(`full name of the location
-ONLY use if user explicitly provides COMPLETE hierarchical format
-Required format examples:
- - France: "Paris,Ile-de-France,France" (NOT "Paris,France")
- - USA: "New York,New York,United States" (NOT "New York")
- - UK: "London,England,United Kingdom" (NOT "London")
-WARNING: If user just says "in Paris" or "in New York", DO NOT use this parameter - let it default to location_code`),
+      location_name: z.string().optional().describe(`location name - supports natural language input
+Examples: "Brussels", "Bruxelles", "NYC", "Paris", "London"
+Will be auto-resolved to full DataForSEO format (e.g., "Brussels,Brussels Capital,Belgium")
+You can also provide the full format directly if known`),
       location_code: z.number().default(1006094).optional().describe(`location code for precise targeting
 optional field - defaults to 1006094 (Paris, France) if not specified
 RECOMMENDED: Use this instead of location_name for reliability
@@ -88,7 +86,26 @@ note: setting to 'on' forces Google to show test ads, significantly increasing t
       if (params.location_code !== undefined) {
         requestBody.location_code = params.location_code;
       } else if (params.location_name !== undefined) {
-        requestBody.location_name = params.location_name;
+        // Auto-resolve location_name if not already in hierarchical format
+        if (!LocationResolver.isAlreadyFormatted(params.location_name)) {
+          console.error(`[SerpOrganicLiveAdvanced] Resolving location: "${params.location_name}"`);
+          const resolved = await LocationResolver.resolve(
+            this.dataForSEOClient,
+            params.location_name,
+            params.search_engine || 'google'
+          );
+          if (resolved) {
+            // Use location_code for reliability (preferred by DataForSEO)
+            requestBody.location_code = resolved.location_code;
+            console.error(`[SerpOrganicLiveAdvanced] Resolved to location_code: ${resolved.location_code} (${resolved.location_name})`);
+          } else {
+            // Fallback: use as-is and let DataForSEO handle it
+            console.error(`[SerpOrganicLiveAdvanced] Could not resolve "${params.location_name}", using as-is`);
+            requestBody.location_name = params.location_name;
+          }
+        } else {
+          requestBody.location_name = params.location_name;
+        }
       } else {
         // Default to Paris location code if neither is provided
         requestBody.location_code = 1006094;

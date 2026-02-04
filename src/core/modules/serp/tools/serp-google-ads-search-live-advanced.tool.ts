@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { BaseTool } from '../../base.tool.js';
 import { DataForSEOClient } from '../../../client/dataforseo.client.js';
+import { LocationResolver } from '../../../utils/location-resolver.js';
 
 export class SerpGoogleAdsSearchLiveAdvancedTool extends BaseTool {
   constructor(dataForSEOClient: DataForSEOClient) {
@@ -12,7 +13,7 @@ export class SerpGoogleAdsSearchLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get Google Ads data from a specific advertiser using their domain or advertiser ID. This endpoint retrieves all ads run by that advertiser from Google Ads Transparency Center, including ad creatives, formats (text/image/video), preview URLs, and date ranges when ads were shown. Useful for analyzing a specific competitor\'s advertising strategy.';
+    return 'Get Google Ads data from a specific advertiser using their domain or advertiser ID. This endpoint retrieves all ads run by that advertiser from Google Ads Transparency Center, including ad creatives, formats (text/image/video), preview URLs, and date ranges when ads were shown. Useful for analyzing a specific competitor\'s advertising strategy. Location supports natural language input (e.g., "Brussels", "NYC").';
   }
 
   getParams(): z.ZodRawShape {
@@ -26,13 +27,9 @@ optional field (required if target not provided)
 unique identifier for the advertiser from Google Ads Transparency Center
 example: "AR13752565271262920705"
 note: you can get advertiser_id from the ads_advertisers endpoint`),
-      location_name: z.string().default('United States').describe(`full name of the location
-required field
-Location format - hierarchical, comma-separated (from most specific to least)
-Can be one of:
-1. Country only: "United States"
-2. Region,Country: "California,United States"
-3. City,Region,Country: "San Francisco,California,United States"`),
+      location_name: z.string().default('United States').describe(`location name - supports natural language input
+Examples: "Brussels", "NYC", "Paris", "United States"
+Will be auto-resolved to full DataForSEO format if needed`),
       language_code: z.string().default('en').optional().describe("search engine language code (e.g., 'en')"),
       depth: z.number().min(1).max(700).default(100).optional().describe(`parsing depth
 optional field
@@ -68,9 +65,23 @@ default: "last_shown"`),
         throw new Error('Either target (domain) or advertiser_id must be provided');
       }
 
-      const requestBody: any = {
-        location_name: params.location_name,
-      };
+      const requestBody: any = {};
+
+      // Auto-resolve location_name if not already in hierarchical format
+      if (params.location_name !== undefined) {
+        if (!LocationResolver.isAlreadyFormatted(params.location_name)) {
+          console.error(`[SerpGoogleAdsSearch] Resolving location: "${params.location_name}"`);
+          const resolved = await LocationResolver.resolve(this.dataForSEOClient, params.location_name, 'google');
+          if (resolved) {
+            requestBody.location_code = resolved.location_code;
+            console.error(`[SerpGoogleAdsSearch] Resolved to location_code: ${resolved.location_code} (${resolved.location_name})`);
+          } else {
+            requestBody.location_name = params.location_name;
+          }
+        } else {
+          requestBody.location_name = params.location_name;
+        }
+      }
 
       // Add either target or advertiser_id
       if (params.target) {

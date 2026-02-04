@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { BaseTool } from '../../base.tool.js';
 import { DataForSEOClient } from '../../../client/dataforseo.client.js';
+import { LocationResolver } from '../../../utils/location-resolver.js';
 
 export class SerpGoogleAiModeLiveAdvancedTool extends BaseTool {
   constructor(dataForSEOClient: DataForSEOClient) {
@@ -12,19 +13,15 @@ export class SerpGoogleAiModeLiveAdvancedTool extends BaseTool {
   }
 
   getDescription(): string {
-    return 'Get Google AI-powered search results (AI Overviews) for a keyword. This endpoint provides AI-generated summaries and contextual information from Google\'s AI Mode search feature, including AI overview snippets, references, and related products.';
+    return 'Get Google AI-powered search results (AI Overviews) for a keyword. This endpoint provides AI-generated summaries and contextual information from Google\'s AI Mode search feature, including AI overview snippets, references, and related products. Location supports natural language input (e.g., "Brussels", "NYC").';
   }
 
   getParams(): z.ZodRawShape {
     return {
       keyword: z.string().describe("Search keyword (required)"),
-      location_name: z.string().default('United States').describe(`full name of the location
-required field
-Location format - hierarchical, comma-separated (from most specific to least)
-Can be one of:
-1. Country only: "United States"
-2. Region,Country: "California,United States"
-3. City,Region,Country: "San Francisco,California,United States"`),
+      location_name: z.string().default('United States').describe(`location name - supports natural language input
+Examples: "Brussels", "NYC", "Paris", "United States"
+Will be auto-resolved to full DataForSEO format if needed`),
       language_code: z.string().default('en').describe("search engine language code (e.g., 'en')"),
       depth: z.number().min(10).max(700).default(100).optional().describe(`parsing depth
 optional field
@@ -57,9 +54,24 @@ example: "latest" or specific version like "120.0.6099.129"`),
       console.error(JSON.stringify(params, null, 2));
       const requestBody: any = {
         keyword: params.keyword,
-        location_name: params.location_name,
         language_code: params.language_code,
       };
+
+      // Auto-resolve location_name if not already in hierarchical format
+      if (params.location_name !== undefined) {
+        if (!LocationResolver.isAlreadyFormatted(params.location_name)) {
+          console.error(`[SerpGoogleAiMode] Resolving location: "${params.location_name}"`);
+          const resolved = await LocationResolver.resolve(this.dataForSEOClient, params.location_name, 'google');
+          if (resolved) {
+            requestBody.location_code = resolved.location_code;
+            console.error(`[SerpGoogleAiMode] Resolved to location_code: ${resolved.location_code} (${resolved.location_name})`);
+          } else {
+            requestBody.location_name = params.location_name;
+          }
+        } else {
+          requestBody.location_name = params.location_name;
+        }
+      }
 
       // Add optional parameters only if they are provided
       if (params.depth !== undefined) {
