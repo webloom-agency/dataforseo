@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DataForSEOClient } from '../../../../../client/dataforseo.client.js';
 import { BaseTool } from '../../../../base.tool.js';
+import { LocationResolver } from '../../../../../utils/location-resolver.js';
 
 export class GoogleDomainTrafficOverviewTool extends BaseTool {
   constructor(private client: DataForSEOClient) {
@@ -39,9 +40,12 @@ Default: true`),
 
   async handle(params: any): Promise<any> {
     try {
+      // Resolve location to country level (this endpoint only accepts country names)
+      const locationName = await LocationResolver.resolveToCountry(this.client, params.location_name) || params.location_name;
+      
       const results: any = {
         target: params.target,
-        location_name: params.location_name,
+        location_name: locationName,
         language_code: params.language_code,
         period: 'last_12_months',
         organic_traffic: null,
@@ -58,7 +62,7 @@ Default: true`),
           'POST',
           [{
             target: params.target,
-            location_name: params.location_name,
+            location_name: locationName,
             language_code: params.language_code,
             ignore_synonyms: params.ignore_synonyms,
           }]
@@ -116,7 +120,7 @@ Default: true`),
           'POST',
           [{
             target: params.target,
-            location_name: params.location_name,
+            location_name: locationName,
             language_code: params.language_code,
             ignore_synonyms: params.ignore_synonyms,
             date_from: dateFrom, // Request last 12 months explicitly
@@ -168,7 +172,7 @@ Default: true`),
             'POST',
             [{
               target: [{ domain: params.target.replace(/^(https?:\/\/)?(www\.)?/, '') }],
-              location_name: params.location_name,
+              location_name: locationName,
               language_code: params.language_code,
               platform: 'google',
               limit: 100, // Get more items to aggregate monthly data
@@ -183,7 +187,7 @@ Default: true`),
             'POST',
             [{
               target: [{ domain: params.target.replace(/^(https?:\/\/)?(www\.)?/, '') }],
-              location_name: params.location_name,
+              location_name: locationName,
               language_code: params.language_code,
               platform: 'chat_gpt',
               limit: 100, // Get more items to aggregate monthly data

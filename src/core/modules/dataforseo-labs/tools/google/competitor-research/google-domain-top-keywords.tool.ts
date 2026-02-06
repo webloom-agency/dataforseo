@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DataForSEOClient } from '../../../../../client/dataforseo.client.js';
 import { BaseTool } from '../../../../base.tool.js';
+import { LocationResolver } from '../../../../../utils/location-resolver.js';
 
 export class GoogleDomainTopKeywordsTool extends BaseTool {
   constructor(private client: DataForSEOClient) {
@@ -56,9 +57,12 @@ Default: false`),
 
   async handle(params: any): Promise<any> {
     try {
+      // Resolve location to country level (this endpoint only accepts country names)
+      const locationName = await LocationResolver.resolveToCountry(this.client, params.location_name) || params.location_name;
+      
       const results: any = {
         target: params.target,
-        location_name: params.location_name,
+        location_name: locationName,
         language_code: params.language_code,
         organic_keywords: [],
         paid_keywords: [],
@@ -105,7 +109,7 @@ Default: false`),
           'POST',
           [{
             target: params.target,
-            location_name: params.location_name,
+            location_name: locationName,
             language_code: params.language_code,
             limit: params.organic_limit,
             filters: organicFilters,
@@ -156,7 +160,7 @@ Default: false`),
           'POST',
           [{
             target: params.target,
-            location_name: params.location_name,
+            location_name: locationName,
             language_code: params.language_code,
             limit: params.paid_limit,
             filters: paidFilters,
@@ -215,7 +219,7 @@ Default: false`),
             'POST',
             [{
               target: [{ domain: cleanTarget }],
-              location_name: params.location_name,
+              location_name: locationName,
               language_code: params.language_code,
               platform: 'google',
               filters: aiFilters.length > 0 ? aiFilters : undefined,
@@ -230,7 +234,7 @@ Default: false`),
             'POST',
             [{
               target: [{ domain: cleanTarget }],
-              location_name: params.location_name,
+              location_name: locationName,
               language_code: params.language_code,
               platform: 'chat_gpt',
               filters: aiFilters.length > 0 ? aiFilters : undefined,

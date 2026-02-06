@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DataForSEOClient } from '../../../../../client/dataforseo.client.js';
 import { BaseTool } from '../../../../base.tool.js';
+import { LocationResolver } from '../../../../../utils/location-resolver.js';
 
 export class GoogleRelevantPagesTool extends BaseTool {
   constructor(private client: DataForSEOClient) {
@@ -89,9 +90,12 @@ set to true if you want to get highly-relevant competitors excluding the top web
 
   async handle(params: any): Promise<any> {
     try {
+      // Resolve location to country level (this endpoint only accepts country names)
+      const locationName = await LocationResolver.resolveToCountry(this.client, params.location_name) || params.location_name;
+      
       const response = await this.client.makeRequest('/v3/dataforseo_labs/google/relevant_pages/live', 'POST', [{
         target: params.target,
-        location_name: params.location_name,
+        location_name: locationName,
         language_code: params.language_code,
         ignore_synonyms: params.ignore_synonyms,
         filters: this.formatFilters(params.filters),

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DataForSEOClient } from '../../../../../client/dataforseo.client.js';
 import { BaseTool } from '../../../../base.tool.js';
+import { LocationResolver } from '../../../../../utils/location-resolver.js';
 
 export class GoogleBulkTrafficEstimationTool extends BaseTool {
   constructor(private client: DataForSEOClient) {
@@ -40,9 +41,12 @@ example:
 
   async handle(params: any): Promise<any> {
     try {
+      // Resolve location to country level (this endpoint only accepts country names)
+      const locationName = await LocationResolver.resolveToCountry(this.client, params.location_name) || params.location_name;
+      
       const response = await this.client.makeRequest('/v3/dataforseo_labs/google/bulk_traffic_estimation/live', 'POST', [{
         targets: params.targets,
-        location_name: params.location_name,
+        location_name: locationName,
         language_code: params.language_code,
         item_types: ['organic'],
         ignore_synonyms: params.ignore_synonyms

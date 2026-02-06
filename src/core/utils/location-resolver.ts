@@ -162,6 +162,72 @@ export class LocationResolver {
   }
 
   /**
+   * Resolves a location string to COUNTRY level only
+   * Used for DataForSEO Labs endpoints that only accept country names
+   * 
+   * @param client - DataForSEOClient instance
+   * @param locationInput - Any location input (city, region, or country)
+   * @returns Country name only (e.g., "France", "Germany", "United States")
+   */
+  static async resolveToCountry(
+    client: DataForSEOClient,
+    locationInput: string
+  ): Promise<string | null> {
+    const inputLower = locationInput.toLowerCase().trim();
+    
+    // Check country-specific cache
+    const cacheKey = `country:${inputLower}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
+      console.error(`[LocationResolver] Country cache hit for "${locationInput}" -> "${cached.location_name}"`);
+      return cached.location_name;
+    }
+
+    // If already formatted (e.g., "Paris,Ile-de-France,France"), extract the last part
+    if (this.isAlreadyFormatted(locationInput)) {
+      const parts = locationInput.split(',').map(p => p.trim());
+      const country = parts[parts.length - 1];
+      console.error(`[LocationResolver] Extracted country from formatted input: "${locationInput}" -> "${country}"`);
+      
+      // Cache it
+      this.cache.set(cacheKey, {
+        location_name: country,
+        location_code: 0, // Not used for country-only resolution
+        timestamp: Date.now()
+      });
+      
+      return country;
+    }
+
+    // Otherwise, resolve via API and extract country
+    try {
+      const resolved = await this.resolve(client, locationInput, 'google');
+      if (resolved) {
+        // Extract country from the resolved location_name
+        const parts = resolved.location_name.split(',').map(p => p.trim());
+        const country = parts[parts.length - 1];
+        
+        console.error(`[LocationResolver] Resolved to country: "${locationInput}" -> "${resolved.location_name}" -> "${country}"`);
+        
+        // Cache it
+        this.cache.set(cacheKey, {
+          location_name: country,
+          location_code: 0,
+          timestamp: Date.now()
+        });
+        
+        return country;
+      }
+    } catch (error) {
+      console.error(`[LocationResolver] Error resolving to country: "${locationInput}"`, error);
+    }
+
+    // Fallback: return as-is (might already be a country name)
+    console.error(`[LocationResolver] Could not resolve country, using as-is: "${locationInput}"`);
+    return locationInput;
+  }
+
+  /**
    * Clear the location cache (useful for testing)
    */
   static clearCache(): void {

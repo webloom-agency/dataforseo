@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { DataForSEOClient } from '../../../../../client/dataforseo.client.js';
 import { BaseTool, DataForSEOFullResponse, DataForSEOResponse } from '../../../../base.tool.js';
 import { defaultGlobalToolConfig } from '../../../../../config/global.tool.js';
+import { LocationResolver } from '../../../../../utils/location-resolver.js';
 
 export class GoogleHistoricalSERP extends BaseTool {
   constructor(private client: DataForSEOClient) {
@@ -34,9 +35,12 @@ example:
 
   async handle(params: any): Promise<any> {
     try {
+      // Resolve location to country level (this endpoint only accepts country names)
+      const locationName = await LocationResolver.resolveToCountry(this.client, params.location_name) || params.location_name;
+      
       const response = await this.client.makeRequest('/v3/dataforseo_labs/google/historical_serps/live', 'POST', [{
         keyword: params.keyword,
-        location_name: params.location_name,
+        location_name: locationName,
         language_code: params.language_code
       }]);
 

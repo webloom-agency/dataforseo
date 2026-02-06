@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DataForSEOClient } from '../../../../../client/dataforseo.client.js';
 import { BaseTool, DataForSEOResponse } from '../../../../base.tool.js';
+import { LocationResolver } from '../../../../../utils/location-resolver.js';
 
 export class GoogleHistoricalDomainRankOverviewTool extends BaseTool {
   constructor(private client: DataForSEOClient) {
@@ -37,9 +38,12 @@ example:
 
   async handle(params: any): Promise<any> {
     try {
+      // Resolve location to country level (this endpoint only accepts country names)
+      const locationName = await LocationResolver.resolveToCountry(this.client, params.location_name) || params.location_name;
+      
       const response = await this.client.makeRequest('/v3/dataforseo_labs/google/historical_rank_overview/live', 'POST', [{
         target: params.target,
-        location_name: params.location_name,
+        location_name: locationName,
         language_code: params.language_code,
         ignore_synonyms: params.ignore_synonyms,
         include_clickstream_data: params.include_clickstream_data
